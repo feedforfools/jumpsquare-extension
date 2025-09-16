@@ -1,1 +1,0 @@
-console.log("Here's the Jump! content script loaded on Prime Video.");

@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+@layer components {
+  .service-card {
+    @apply bg-card-bg rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 hover:bg-gray-700 hover:scale-105;
+  }
+  
+  .service-logo {
+    @apply w-12 h-12 object-contain mb-2;
+  }
+  
+  .service-name {
+    @apply text-sm text-center text-gray-300;
+  }
+}

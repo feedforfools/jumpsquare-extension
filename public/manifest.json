@@ -3,12 +3,12 @@
   "name": "Here's the Jump!",
   "description": "Real-time jumpscare alerts on your favorite streaming platforms.",
   "version": "0.1.0",
-  "permissions": ["storage"],
+  "permissions": ["storage", "tabs", "scripting"],
   "host_permissions": [
     "https://*.primevideo.com/*"
   ],
   "action": {
-    "default_popup": "src/ui/popup.html",
+    "default_popup": "src/popup/index.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -21,8 +21,8 @@
     "128": "icons/icon128.png"
   },
   "content_scripts": [
-        {
-        "matches": ["https://*.primevideo.com/*"],
+    {
+      "matches": ["https://*.primevideo.com/*"],
       "js": ["assets/content.js"]
     }
   ],
