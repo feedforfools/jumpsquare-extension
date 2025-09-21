@@ -45,8 +45,12 @@ class PopupApp {
       return;
     }
 
-    const message: GetTabStateMessage = { type: "GET_TAB_STATE" };
     try {
+      const message: GetTabStateMessage = {
+        type: "GET_TAB_STATE",
+        tabId: currentTab.id,
+      };
+
       const bgState = await chrome.runtime.sendMessage(message);
       if (bgState && bgState.movieTitle) {
         this.state.currentPage = "movie-detected";
@@ -61,10 +65,10 @@ class PopupApp {
       }
     } catch (error) {
       console.error(
-        "Could not get state from background script. Is it running?",
+        "[HTJ Popup] Could not get state from background script:",
         error
       );
-      this.state.currentPage = "on-site"; // Fallback
+      this.state.currentPage = "on-site";
       const mainElement = document.getElementById("main-content")!;
       mainElement.innerHTML = `<p class="text-red-400 text-center">Error: Could not connect to extension background. Try reloading the page.</p>`;
     }

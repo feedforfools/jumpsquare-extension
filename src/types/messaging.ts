@@ -9,6 +9,10 @@ export interface MovieDetectedMessage {
   };
 }
 
+export interface ClearMovieStateMessage {
+  type: "CLEAR_MOVIE_STATE";
+}
+
 // Background Script -> Content Script
 export interface JumpscareDataMessage {
   type: "JUMPSCARE_DATA";
@@ -18,14 +22,15 @@ export interface JumpscareDataMessage {
   };
 }
 
-// Popup -> Background Script
-export interface GetTabStateMessage {
-  type: "GET_TAB_STATE";
-}
-
 export interface ToggleStateMessage {
   type: "TOGGLE_STATE";
   payload: {
     isEnabled: boolean;
   };
+}
+
+// Popup -> Background Script
+export interface GetTabStateMessage {
+  type: "GET_TAB_STATE";
+  tabId: number;
 }

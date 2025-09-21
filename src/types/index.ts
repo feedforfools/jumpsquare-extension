@@ -40,5 +40,12 @@ export interface Jumpscare {
   category: string;
   timestamp_minutes: number;
   timestamp_seconds: number;
+  timeInSeconds: number;
   description?: string;
+}
+
+export interface TabState {
+  isEnabled: boolean;
+  movieTitle: string | null;
+  jumpscares: Jumpscare[];
 }

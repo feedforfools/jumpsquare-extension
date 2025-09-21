@@ -7,33 +7,55 @@ export class MessageHandler {
     this.backgroundService = backgroundService;
   }
 
-  async handleMessage(
+  handleMessage(
     message: any,
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
-  ): Promise<boolean> {
+  ): boolean {
     const tabId = sender.tab?.id;
-    if (!tabId) return false; // Ignore messages without a tab ID
 
     switch (message.type) {
       case "MOVIE_DETECTED":
-        await this.backgroundService.handleMovieDetected(
+        if (!tabId) break;
+
+        this.backgroundService.handleMovieDetected(
           tabId,
           message.payload.title,
           message.payload.year
         );
         break;
 
-      case "GET_TAB_STATE":
-        const state = this.backgroundService.getTabState(tabId);
-        console.log(
-          `[HTJ Background] Popup requested state for tab ${tabId}. Sending:`,
-          state
-        );
-        sendResponse(state);
-        return true; // Indicates async response
+      case "CLEAR_MOVIE_STATE":
+        if (!tabId) break;
+
+        this.backgroundService.clearMovieState(tabId);
+        break;
+
+      case "GET_TAB_STATE": // Handle this async case separately
+        // For popup requests get the tab ID from the message payload
+        const requestedTabId = message.tabId;
+        if (!requestedTabId) {
+          console.error(
+            "[HTJ Background] No tab ID provided in GET_TAB_STATE request"
+          );
+          sendResponse(null);
+          return true;
+        }
+
+        this.backgroundService
+          .getTabState(requestedTabId)
+          .then((state) => {
+            sendResponse(state);
+          })
+          .catch((error) => {
+            console.error(`[HTJ Background] Error getting tab state:`, error);
+            sendResponse(null);
+          });
+        return true; // Keep message channel open for async response
 
       case "TOGGLE_STATE":
+        if (!tabId) break;
+
         this.backgroundService.handleToggleState(
           tabId,
           message.payload.isEnabled
