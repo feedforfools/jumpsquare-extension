@@ -9,7 +9,9 @@ export class VideoTracker {
   attachVideoListener(): void {
     const newVideoElement = document.querySelector("video");
     if (newVideoElement && newVideoElement !== this.videoElement) {
-      console.log("[HTJ Content] Video player found. Attaching listener.");
+      console.log(
+        "[HTJ VideoTracker] Video player found. Attaching time listener."
+      );
 
       if (this.videoElement) {
         this.videoElement.removeEventListener(
@@ -25,7 +27,7 @@ export class VideoTracker {
 
   private handleTimeUpdate = (event: Event): void => {
     const video = event.target as HTMLVideoElement;
-    if (this.timeUpdateCallback) {
+    if (this.timeUpdateCallback && !video.paused) {
       this.timeUpdateCallback(video.currentTime);
     }
   };

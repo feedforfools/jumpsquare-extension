@@ -123,7 +123,10 @@ export class BackgroundService {
       state.jumpscares = [];
 
       const jumpscares = await this.fetchJumpscares(title, year);
-      state.jumpscares = jumpscares;
+      state.jumpscares = jumpscares.map((j) => ({
+        ...j,
+        timeInSeconds: j.timestamp_minutes * 60 + j.timestamp_seconds,
+      }));
       await this.saveTabState(tabId);
 
       console.log(
