@@ -1,42 +1,62 @@
 import type { JumpscareEvent } from "./JumpscareScheduler.js";
+import { Toast, type ToastConfig } from "./Toast.js";
 
 export class JumpscareDisplayManager {
   private isEnabled: boolean = true;
+  private JumpscareToast: Toast;
 
-  constructor() {}
-
-  setEnabled(enabled: boolean): void {
-    this.isEnabled = enabled;
-    console.log(
-      `[HTJ Display] Jumpscare display ${enabled ? "enabled" : "disabled"}`
-    );
+  constructor() {
+    this.JumpscareToast = new Toast();
   }
 
   handleJumpscareEvent(event: JumpscareEvent): void {
-    if (!this.isEnabled) {
-      return;
-    }
+    if (!this.isEnabled) return;
 
-    const { jumpscareIndex, jumpscare, timeRemaining } = event;
-
-    console.log(`🎬 JUMPSCARE ALERT #${jumpscareIndex}:`);
-    console.log(`   Category: ${jumpscare.category.toUpperCase()}`);
-    console.log(`   Time remaining: ${timeRemaining.toFixed(1)}s`);
-    console.log(
-      `   At: ${Math.floor(
-        jumpscare.timestamp_minutes
-      )}:${jumpscare.timestamp_seconds.toString().padStart(2, "0")}`
-    );
-
-    if (jumpscare.description) {
-      console.log(`   Description: ${jumpscare.description}`);
-    }
-
-    // TODO: Replace with custom HTML toast notification
-    // this.showToastNotification(event);
+    const toastId = `htj-${event.jumpscareIndex}`;
+    const config = this.createToastConfig(event, toastId);
+    this.JumpscareToast.showToast(config);
+    this.logJumpscareAlert(event);
   }
 
-  // TODO: Future method for HTML notifications
-  //   private showToastNotification(event: JumpscareEvent): void {
-  //   }
+  private createToastConfig(
+    event: JumpscareEvent,
+    toastId: string
+  ): ToastConfig {
+    const { jumpscare, timeRemaining } = event;
+
+    // Determine severity and message
+    const isMajor = jumpscare.category === "major";
+    const message = isMajor
+      ? "Major jumpscare incoming. Watch out!"
+      : "Minor jumpscare incoming";
+    const icon = "⚠️";
+
+    // Auto-remove after warning window duration
+    const displayDuration = Math.max(timeRemaining * 1000, 3000);
+
+    return {
+      id: toastId,
+      message,
+      icon,
+      displayDuration,
+      class: jumpscare.category as "minor" | "major" | "info",
+    };
+  }
+
+  private logJumpscareAlert(event: JumpscareEvent): void {
+    const { jumpscare } = event;
+    const isMajor = jumpscare.category === "major";
+
+    console.log(`🎬 JUMPSCARE ALERT #${event.jumpscareIndex}:`);
+    console.log(`   Category: ${jumpscare.category.toUpperCase()}`);
+    console.log(`   Severity: ${isMajor ? "MAJOR" : "Minor"}`);
+    console.log(`   Time remaining: ${event.timeRemaining.toFixed(1)}s`);
+  }
+
+  setEnabled(enabled: boolean): void {
+    this.isEnabled = enabled;
+    if (!enabled) {
+      this.JumpscareToast.clearToast();
+    }
+  }
 }
