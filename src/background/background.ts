@@ -24,7 +24,7 @@ class ExtensionBackground {
 
     // Clean up tab state when tabs are closed
     chrome.tabs.onRemoved.addListener((tabId) => {
-      this.backgroundService.clearMovieState(tabId);
+      this.backgroundService.clearTabState(tabId);
     });
   }
 }

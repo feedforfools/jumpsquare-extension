@@ -59,7 +59,8 @@ class ContentScript {
 
     window.addEventListener("beforeunload", () => {
       if (this.wasOnMoviePage) {
-        this.clearMovieState();
+        this.clearTabState();
+        this.movieDetector.reset();
       }
     });
   }
@@ -72,21 +73,23 @@ class ContentScript {
 
       if (wasOnMoviePage && !isNowOnMoviePage) {
         console.log("[HTJ Content] Left movie page, clearing state");
-        this.clearMovieState();
+        this.clearTabState();
+        this.movieDetector.reset();
+      } else if (wasOnMoviePage && isNowOnMoviePage) {
+        this.movieDetector.forceRedetection();
       }
 
       this.currentUrl = newUrl;
       this.wasOnMoviePage = isNowOnMoviePage;
-      this.init();
     }
   }
 
-  private clearMovieState(): void {
+  private clearTabState(): void {
     this.jumpscareMonitor.setJumpscares([]);
 
     chrome.runtime
       .sendMessage({
-        type: "CLEAR_MOVIE_STATE",
+        type: "CLEAR_TAB_STATE",
       })
       .catch((error) => {
         console.error(
@@ -98,15 +101,16 @@ class ContentScript {
 
   private setupDOMObserver(): void {
     this.observer = new MutationObserver(() => {
+      if (!TabService.isOnSupportedSite(window.location.href)) {
+        return;
+      }
+
       if (this.currentUrl !== window.location.href) {
         this.handleUrlChange();
       }
 
-      if (TabService.isOnSupportedSite(window.location.href)) {
-        this.movieDetector.identifyMovie();
-      }
-
       if (this.isOnMovieOrVideoPage()) {
+        this.movieDetector.identifyMovie();
         this.videoTracker.attachVideoListener();
       }
     });
@@ -129,9 +133,9 @@ class ContentScript {
     if (!TabService.isOnSupportedSite(window.location.href)) {
       return;
     }
-    this.movieDetector.identifyMovie();
 
     if (this.isOnMovieOrVideoPage()) {
+      this.movieDetector.identifyMovie();
       this.videoTracker.attachVideoListener();
     }
   }
@@ -141,7 +145,8 @@ class ContentScript {
     this.videoTracker.cleanup();
 
     if (this.wasOnMoviePage) {
-      this.clearMovieState();
+      this.clearTabState();
+      this.movieDetector.reset();
     }
   }
 }

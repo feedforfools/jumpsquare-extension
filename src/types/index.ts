@@ -14,15 +14,14 @@ export interface StreamingService {
   isPremium?: boolean;
 }
 
-export interface MovieInfo {
+export interface Movie {
   title: string;
-  year?: string;
-  jumpscareCount?: number;
-  hasJumpscares?: boolean;
-  isLoading?: boolean;
+  year: string;
+  jumpscareCount: number;
+  jumpscares: Jumpscare[];
 }
 
-export interface AppState {
+export interface PopupState {
   currentPage:
     | "services"
     | "on-site"
@@ -32,7 +31,8 @@ export interface AppState {
   user: User | null;
   isOnSupportedSite: boolean;
   currentSite?: string;
-  movieInfo?: MovieInfo;
+  movie?: Movie;
+  movieIsLoading: boolean;
 }
 
 export interface Jumpscare {
@@ -46,6 +46,5 @@ export interface Jumpscare {
 
 export interface TabState {
   isEnabled: boolean;
-  movieTitle: string | null;
-  jumpscares: Jumpscare[];
+  movie: Movie | null;
 }

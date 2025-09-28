@@ -25,10 +25,10 @@ export class MessageHandler {
         );
         break;
 
-      case "CLEAR_MOVIE_STATE":
+      case "CLEAR_TAB_STATE":
         if (!tabId) break;
 
-        this.backgroundService.clearMovieState(tabId);
+        this.backgroundService.clearTabState(tabId);
         break;
 
       case "GET_TAB_STATE": // Handle this async case separately

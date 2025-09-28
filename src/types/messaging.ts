@@ -9,8 +9,8 @@ export interface MovieDetectedMessage {
   };
 }
 
-export interface ClearMovieStateMessage {
-  type: "CLEAR_MOVIE_STATE";
+export interface ClearTabStateMessage {
+  type: "CLEAR_TAB_STATE";
 }
 
 // Background Script -> Content Script
