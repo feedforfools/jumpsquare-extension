@@ -69,6 +69,10 @@ export class TabStateManager {
                   jumpscares: Array.isArray(savedState.movie.jumpscares)
                     ? savedState.movie.jumpscares
                     : [],
+                  isInDb:
+                    typeof savedState.movie.isInDb === "boolean"
+                      ? savedState.movie.isInDb
+                      : false,
                 }
               : null,
         };

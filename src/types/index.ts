@@ -19,6 +19,7 @@ export interface Movie {
   year: string;
   jumpscareCount: number;
   jumpscares: Jumpscare[];
+  isInDb: boolean;
 }
 
 export interface PopupState {

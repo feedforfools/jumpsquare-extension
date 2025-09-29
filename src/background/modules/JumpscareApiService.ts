@@ -6,7 +6,7 @@ export class JumpscareApiService {
   async fetchJumpscares(
     title: string,
     year: string | null
-  ): Promise<Jumpscare[]> {
+  ): Promise<{ jumpscares: Jumpscare[]; found: boolean }> {
     console.log(`[HTJ Background] Fetching jumpscares for: ${title}`);
 
     const params = new URLSearchParams({ title });
@@ -18,12 +18,18 @@ export class JumpscareApiService {
       );
 
       if (!response.ok) {
+        if (response.status === 404) {
+          console.log(
+            `[HTJ Background] Movie "${title}" not found in database.`
+          );
+          return { jumpscares: [], found: false };
+        }
         throw new Error(`API Error: ${response.status}`);
       }
 
       const data = await response.json();
 
-      return (data.jumpscares || [])
+      const jumpscares = (data.jumpscares || [])
         .map((j: Jumpscare) => ({
           ...j,
           timeInSeconds: j.timestamp_minutes * 60 + j.timestamp_seconds,
@@ -31,9 +37,11 @@ export class JumpscareApiService {
         .sort(
           (a: Jumpscare, b: Jumpscare) => a.timeInSeconds - b.timeInSeconds
         );
+
+      return { jumpscares, found: true };
     } catch (error) {
       console.error("[HTJ Background] Failed to fetch jumpscares:", error);
-      return [];
+      return { jumpscares: [], found: false };
     }
   }
 }

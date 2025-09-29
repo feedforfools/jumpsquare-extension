@@ -24,29 +24,27 @@ export class MovieHandler {
           year,
           jumpscareCount: 0,
           jumpscares: [],
+          isInDb: false,
         };
       } else {
         state.movie.title = title;
         state.movie.year = year;
         state.movie.jumpscareCount = 0;
         state.movie.jumpscares = [];
+        state.movie.isInDb = false;
       }
 
-      const jumpscares = await this.jumpscareApiService.fetchJumpscares(
-        title,
-        year
-      );
+      const { jumpscares, found } =
+        await this.jumpscareApiService.fetchJumpscares(title, year);
 
-      state.movie.jumpscares = jumpscares.map((j) => ({
-        ...j,
-        timeInSeconds: j.timestamp_minutes * 60 + j.timestamp_seconds,
-      }));
+      state.movie.jumpscares = jumpscares;
       state.movie.jumpscareCount = jumpscares.length;
+      state.movie.isInDb = found;
 
       await this.tabStateManager.saveTabState(tabId);
 
       console.log(
-        `[HTJ Background] Loaded ${jumpscares.length} jumpscares for "${title}" in tab ${tabId}. Sending to content script.`
+        `[HTJ Background] Loaded ${jumpscares.length} jumpscares for "${title}" in tab ${tabId}. Found in DB: ${found}. Sending to content script.`
       );
 
       // Send jumpscares to content script
