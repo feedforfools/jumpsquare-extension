@@ -15,6 +15,7 @@ export interface StreamingService {
 }
 
 export interface Movie {
+  id?: string;
   title: string;
   year: string;
   jumpscareCount: number;

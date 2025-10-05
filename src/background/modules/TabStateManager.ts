@@ -54,6 +54,10 @@ export class TabStateManager {
           movie:
             typeof savedState.movie === "object" && savedState.movie !== null
               ? {
+                  id:
+                    typeof savedState.movie.id === "string"
+                      ? savedState.movie.id
+                      : undefined,
                   title:
                     typeof savedState.movie.title === "string"
                       ? savedState.movie.title

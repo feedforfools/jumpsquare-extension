@@ -17,53 +17,59 @@ export class MovieHandler {
   ): Promise<void> {
     const state = await this.tabStateManager.getTabState(tabId);
 
-    if (!state.movie || state.movie.title !== title) {
-      if (!state.movie) {
-        state.movie = {
-          title,
-          year,
-          jumpscareCount: 0,
-          jumpscares: [],
-          isInDb: false,
-        };
-      } else {
-        state.movie.title = title;
-        state.movie.year = year;
-        state.movie.jumpscareCount = 0;
-        state.movie.jumpscares = [];
-        state.movie.isInDb = false;
-      }
+    // Only fetch if the movie title or year has changed
+    if (state.movie?.title === title && state.movie?.year === year) {
+      return;
+    }
 
-      const { jumpscares, found } =
-        await this.jumpscareApiService.fetchJumpscares(title, year);
+    const {
+      movie: foundMovie,
+      jumpscares,
+      found,
+    } = await this.jumpscareApiService.fetchJumpscares(title, year);
 
-      state.movie.jumpscares = jumpscares;
-      state.movie.jumpscareCount = jumpscares.length;
-      state.movie.isInDb = found;
-
-      await this.tabStateManager.saveTabState(tabId);
-
-      console.log(
-        `[HTJ Background] Loaded ${jumpscares.length} jumpscares for "${title}" in tab ${tabId}. Found in DB: ${found}. Sending to content script.`
-      );
-
-      // Send jumpscares to content script
-      const message: JumpscareDataMessage = {
-        type: "JUMPSCARE_DATA",
-        payload: {
-          jumpscares: jumpscares,
-          movieTitle: title,
-        },
+    if (found && foundMovie) {
+      state.movie = {
+        id: foundMovie.id,
+        title: foundMovie.title,
+        year: foundMovie.year,
+        jumpscares: jumpscares,
+        jumpscareCount: jumpscares.length,
+        isInDb: true,
       };
+    } else {
+      // Movie not found in DB, store the detected info
+      state.movie = {
+        title: title,
+        year: year,
+        jumpscares: [],
+        jumpscareCount: 0,
+        isInDb: false,
+      };
+    }
 
-      try {
-        await chrome.tabs.sendMessage(tabId, message);
-      } catch (error) {
-        console.error(
-          `[HTJ Background] Failed to send jumpscares to tab ${tabId}:`,
-          error
-        );
-      }
+    await this.tabStateManager.saveTabState(tabId);
+
+    console.log(
+      `[HTJ Background] Loaded ${jumpscares.length} jumpscares for "${state.movie.title}" in tab ${tabId}. Found in DB: ${found}. Sending to content script.`
+    );
+
+    // Send jumpscares to content script
+    const message: JumpscareDataMessage = {
+      type: "JUMPSCARE_DATA",
+      payload: {
+        jumpscares: jumpscares,
+        movieTitle: state.movie.title,
+      },
+    };
+
+    try {
+      await chrome.tabs.sendMessage(tabId, message);
+    } catch (error) {
+      console.error(
+        `[HTJ Background] Failed to send jumpscares to tab ${tabId}:`,
+        error
+      );
     }
   }
 }

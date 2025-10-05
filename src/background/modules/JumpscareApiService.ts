@@ -1,4 +1,10 @@
-import type { Jumpscare } from "../../types/index.js";
+import type { Jumpscare, Movie } from "../../types/index.js";
+
+export interface JumpscareApiResponse {
+  movie: Movie | null;
+  jumpscares: Jumpscare[];
+  found: boolean;
+}
 
 export class JumpscareApiService {
   private readonly apiBaseUrl = "http://localhost:3000"; // TODO: Use production URL
@@ -6,7 +12,7 @@ export class JumpscareApiService {
   async fetchJumpscares(
     title: string,
     year: string | null
-  ): Promise<{ jumpscares: Jumpscare[]; found: boolean }> {
+  ): Promise<JumpscareApiResponse> {
     console.log(`[HTJ Background] Fetching jumpscares for: ${title}`);
 
     const params = new URLSearchParams({ title });
@@ -22,7 +28,7 @@ export class JumpscareApiService {
           console.log(
             `[HTJ Background] Movie "${title}" not found in database.`
           );
-          return { jumpscares: [], found: false };
+          return { movie: null, jumpscares: [], found: false };
         }
         throw new Error(`API Error: ${response.status}`);
       }
@@ -38,10 +44,10 @@ export class JumpscareApiService {
           (a: Jumpscare, b: Jumpscare) => a.timeInSeconds - b.timeInSeconds
         );
 
-      return { jumpscares, found: true };
+      return { movie: data.movie, jumpscares, found: true };
     } catch (error) {
       console.error("[HTJ Background] Failed to fetch jumpscares:", error);
-      return { jumpscares: [], found: false };
+      return { movie: null, jumpscares: [], found: false };
     }
   }
 }
