@@ -26,8 +26,8 @@ export class MovieDetector {
       movieInfo &&
       movieInfo.title &&
       movieInfo.year &&
-      (movieInfo.title !== this.currentMovieTitle ||
-        movieInfo.year !== this.currentMovieYear)
+      movieInfo.title !== this.currentMovieTitle &&
+      movieInfo.year !== this.currentMovieYear
     ) {
       this.currentMovieTitle = movieInfo.title;
       this.currentMovieYear = movieInfo.year;
@@ -88,7 +88,26 @@ export class MovieDetector {
   }
 
   private extractTitle(): string | null {
-    // Get title from various possible selectors
+    const textTitle = this.extractTitleFromText();
+    const imageTitle = this.extractTitleFromImage();
+
+    if (textTitle && imageTitle) {
+      // If both are found, they must match
+      return textTitle === imageTitle ? this.cleanTitle(textTitle) : null;
+    }
+
+    // If only one is found, return it
+    const finalTitle = textTitle || imageTitle;
+
+    if (!finalTitle) {
+      return null;
+    }
+
+    return this.cleanTitle(finalTitle);
+  }
+
+  private extractTitleFromText(): string | null {
+    // Get title from various possible text selectors
     const titleSelectors = [
       'h1[data-automation-id="title"]',
       ".atvwebplayersdk-title-text",
@@ -99,34 +118,27 @@ export class MovieDetector {
       ".title-wrapper h1",
     ];
 
-    let rawTitle: string | null = null;
     for (const selector of titleSelectors) {
       const titleElement = document.querySelector(selector);
       if (titleElement?.textContent?.trim()) {
-        rawTitle = titleElement.textContent.trim();
-        break;
+        return titleElement.textContent.trim();
       }
     }
+    return null;
+  }
 
+  private extractTitleFromImage(): string | null {
     // Titles might also be in image alt attributes when the logo of the movie is used
-    if (!rawTitle) {
-      const imageTitleElement = document.querySelector(
-        'h1[data-testid="title-art"] img[data-testid="base-image"]'
-      );
-      if (
-        imageTitleElement instanceof HTMLImageElement &&
-        imageTitleElement.alt
-      ) {
-        rawTitle = imageTitleElement.alt;
-      }
+    const imageTitleElement = document.querySelector(
+      'h1[data-testid="title-art"] img[data-testid="base-image"]'
+    );
+    if (
+      imageTitleElement instanceof HTMLImageElement &&
+      imageTitleElement.alt
+    ) {
+      return imageTitleElement.alt;
     }
-
-    if (!rawTitle) {
-      return null;
-    }
-
-    const cleanTitle = this.cleanTitle(rawTitle);
-    return cleanTitle;
+    return null;
   }
 
   private cleanTitle(rawTitle: string): string {
