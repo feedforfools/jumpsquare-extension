@@ -1,4 +1,5 @@
 import type { Jumpscare, Movie } from "../../types/index.js";
+import { InstanceService } from "./InstanceService.js";
 
 export interface JumpscareApiResponse {
   movie: Movie | null;
@@ -19,8 +20,15 @@ export class JumpscareApiService {
     if (year) params.append("year", year);
 
     try {
+      const instanceId = await InstanceService.getInstanceId();
+      const headers = new Headers();
+      if (instanceId) {
+        headers.append("X-Extension-Instance-ID", instanceId);
+      }
+
       const response = await fetch(
-        `${this.apiBaseUrl}/api/extension/jumpscares?${params.toString()}`
+        `${this.apiBaseUrl}/api/extension/jumpscares?${params.toString()}`,
+        { headers }
       );
 
       if (!response.ok) {
