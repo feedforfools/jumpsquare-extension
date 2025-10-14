@@ -19,6 +19,8 @@ export interface JumpscareDataMessage {
   payload: {
     jumpscares: Jumpscare[];
     movieTitle: string;
+    movieYear?: string | null;
+    isInDb: boolean;
   };
 }
 

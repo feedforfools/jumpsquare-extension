@@ -49,7 +49,7 @@ export class JumpscareScheduler {
 
         console.log(
           `[HTJ Scheduler] Triggering jumpscare alert #${
-            window.jumpscareIndex
+            window.jumpscareIndex + 1
           } - ${timeRemaining.toFixed(1)}s remaining`
         );
 

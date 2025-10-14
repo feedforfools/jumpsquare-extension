@@ -1,13 +1,13 @@
 import { MovieDetector } from "./modules/MovieDetector.ts";
 import { VideoTracker } from "./modules/VideoTracker.ts";
-import { JumpscareMonitor } from "./modules/JumpscareMonitor.ts";
+import { NotificationOrchestrator } from "./modules/NotificationOrchestrator.ts";
 import { MessageHandler } from "./modules/MessageHandler.ts";
 import { TabService } from "../shared/services/tabService.ts";
 
 class ContentScript {
   private movieDetector: MovieDetector;
   private videoTracker: VideoTracker;
-  private jumpscareMonitor: JumpscareMonitor;
+  private notificationOrchestrator: NotificationOrchestrator;
   private observer!: MutationObserver;
   private currentUrl: string = "";
   private wasOnMoviePage: boolean = false;
@@ -15,8 +15,8 @@ class ContentScript {
   constructor() {
     this.movieDetector = new MovieDetector();
     this.videoTracker = new VideoTracker();
-    this.jumpscareMonitor = new JumpscareMonitor();
-    new MessageHandler(this.jumpscareMonitor);
+    this.notificationOrchestrator = new NotificationOrchestrator();
+    new MessageHandler(this.notificationOrchestrator);
 
     this.setupVideoTracking();
     this.setupDOMObserver();
@@ -26,7 +26,7 @@ class ContentScript {
 
   private setupVideoTracking(): void {
     this.videoTracker.setTimeUpdateCallback((currentTime: number) => {
-      this.jumpscareMonitor.checkJumpscares(currentTime);
+      this.notificationOrchestrator.checkJumpscares(currentTime);
     });
   }
 
@@ -85,7 +85,7 @@ class ContentScript {
   }
 
   private clearTabState(): void {
-    this.jumpscareMonitor.setJumpscares([]);
+    this.notificationOrchestrator.setJumpscares([]);
 
     chrome.runtime
       .sendMessage({

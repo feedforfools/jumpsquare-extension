@@ -1,21 +1,21 @@
-import type { Jumpscare } from "../../types/index.js";
+import type { Jumpscare, Movie } from "../../types/index.js";
 import {
   JumpscareScheduler,
   type JumpscareEvent,
 } from "./JumpscareScheduler.js";
-import { JumpscareDisplayManager } from "./JumpscareDisplayManager.js";
+import { NotificationPresenter } from "./NotificationPresenter.js";
 
-export class JumpscareMonitor {
+export class NotificationOrchestrator {
   private scheduler: JumpscareScheduler;
-  private displayManager: JumpscareDisplayManager;
+  private notifications: NotificationPresenter;
 
   constructor() {
     this.scheduler = new JumpscareScheduler();
-    this.displayManager = new JumpscareDisplayManager();
+    this.notifications = new NotificationPresenter();
 
-    // Connect scheduler to display manager
+    // Connect scheduler to notifications
     this.scheduler.setJumpscareCallback((event: JumpscareEvent) => {
-      this.displayManager.handleJumpscareEvent(event);
+      this.notifications.handleJumpscareEvent(event);
     });
 
     this.setupEventListeners();
@@ -31,15 +31,24 @@ export class JumpscareMonitor {
     this.scheduler.setJumpscares(jumpscares);
   }
 
+  setMovie(movie: Movie): void {
+    this.notifications.setMovie(movie);
+  }
+
   setEnabled(enabled: boolean): void {
-    this.displayManager.setEnabled(enabled);
+    this.notifications.setEnabled(enabled);
   }
 
   checkJumpscares(currentTime: number): void {
     this.scheduler.processTimeUpdate(currentTime);
+
+    if (currentTime > 0) {
+      this.notifications.showWelcomeMessage();
+    }
   }
 
   private reset(): void {
     this.scheduler.reset();
+    this.notifications.reset();
   }
 }

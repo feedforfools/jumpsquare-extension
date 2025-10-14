@@ -1,10 +1,10 @@
-import type { JumpscareMonitor } from "./JumpscareMonitor.js";
+import type { NotificationOrchestrator } from "./NotificationOrchestrator.js";
 
 export class MessageHandler {
-  private jumpscareMonitor: JumpscareMonitor;
+  private notificationOrchestrator: NotificationOrchestrator;
 
-  constructor(jumpscareMonitor: JumpscareMonitor) {
-    this.jumpscareMonitor = jumpscareMonitor;
+  constructor(notificationOrchestrator: NotificationOrchestrator) {
+    this.notificationOrchestrator = notificationOrchestrator;
     this.setupMessageListener();
   }
 
@@ -15,11 +15,24 @@ export class MessageHandler {
           console.log(
             `[HTJ Content] Received ${message.payload.jumpscares.length} jumpscares for ${message.payload.movieTitle}`
           );
-          this.jumpscareMonitor.setJumpscares(message.payload.jumpscares);
+
+          // Create movie object from payload
+          const movie = {
+            title: message.payload.movieTitle,
+            year: message.payload.movieYear || null,
+            jumpscares: message.payload.jumpscares,
+            jumpscareCount: message.payload.jumpscares.length,
+            isInDb: message.payload.isInDb,
+          };
+
+          this.notificationOrchestrator.setMovie(movie);
+          this.notificationOrchestrator.setJumpscares(
+            message.payload.jumpscares
+          );
           break;
 
         case "TOGGLE_STATE":
-          this.jumpscareMonitor.setEnabled(message.payload.isEnabled);
+          this.notificationOrchestrator.setEnabled(message.payload.isEnabled);
           console.log(
             `[HTJ Content] Extension ${
               message.payload.isEnabled ? "enabled" : "disabled"

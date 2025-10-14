@@ -18,7 +18,7 @@ const commonTextContext = `
         border-left: 6px solid #ff6b35 !important;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
         z-index: 999999 !important;
-        max-width: 320px !important;
+        max-width: 350px !important;
         transform: translateX(120%) !important;
         transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
@@ -47,6 +47,7 @@ const commonTextContext = `
         font-weight: 600 !important;
         line-height: 1.3 !important;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+        white-space: pre-line !important;
       }
       
       .htj-toast.minor {
@@ -56,6 +57,16 @@ const commonTextContext = `
       .htj-toast.major {
         border-left-color: #ff3333 !important;
         animation: htj-pulse 1.5s infinite !important;
+      }
+      
+      .htj-toast.info {
+        border-left-color: #4a9eff !important;
+        background: rgba(0, 0, 0, 0.92) !important;
+      }
+      
+      .htj-toast.info .htj-toast-text {
+        font-size: 14px !important;
+        font-weight: 500 !important;
       }
       
       @keyframes htj-pulse {

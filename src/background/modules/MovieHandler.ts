@@ -60,6 +60,8 @@ export class MovieHandler {
       payload: {
         jumpscares: jumpscares,
         movieTitle: state.movie.title,
+        movieYear: state.movie.year,
+        isInDb: state.movie.isInDb,
       },
     };
 
