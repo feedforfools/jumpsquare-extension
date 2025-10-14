@@ -5,7 +5,8 @@
   "version": "0.1.0",
   "permissions": ["storage", "tabs", "scripting"],
   "host_permissions": [
-    "https://*.primevideo.com/*"
+    "https://*.primevideo.com/*",
+    "https://*.netflix.com/*"
   ],
   "action": {
     "default_popup": "src/popup/index.html",
@@ -22,7 +23,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://*.primevideo.com/*"],
+      "matches": ["https://*.primevideo.com/*", "https://*.netflix.com/*"],
       "js": ["assets/content.js"]
     }
   ],

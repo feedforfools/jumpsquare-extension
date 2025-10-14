@@ -22,16 +22,30 @@ export class TabService {
 
   static isOnSupportedSite(url?: string): boolean {
     if (!url) return false;
-    return url.includes("primevideo.com");
+    return url.includes("primevideo.com") || url.includes("netflix.com");
   }
 
   static isOnMoviePage(url?: string): boolean {
     if (!url) return false;
-    // Prime Video movie/show pages typically have /detail/ in the URL
-    return (
+
+    // Prime Video
+    if (
       url.includes("primevideo.com") &&
       (url.includes("/detail/") || url.includes("/gp/video/detail/"))
-    );
+    ) {
+      return true;
+    }
+
+    // Netflix
+    if (
+      url.includes("netflix.com") &&
+      url.includes("/browse/") &&
+      url.includes("?jbv=")
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   static isInVideoPlayer(url?: string): boolean {
@@ -43,12 +57,18 @@ export class TabService {
       return false;
     }
 
+    // Netflix
+    if (url.includes("netflix.com") && url.includes("/watch/")) {
+      return true;
+    }
+
     return false;
   }
 
   static getSupportedSiteName(url?: string): string | null {
     if (!url) return null;
     if (url.includes("primevideo.com")) return "Prime Video";
+    if (url.includes("netflix.com")) return "Netflix";
     return null;
   }
 }

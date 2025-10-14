@@ -17,7 +17,7 @@ export const STREAMING_SERVICES: StreamingService[] = [
     url: "https://netflix.com",
     logoUrl:
       "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Antu_netflix-desktop.svg/512px-Antu_netflix-desktop.svg.png?20220806170207",
-    isSupported: false,
+    isSupported: true,
   },
   {
     id: "disney",
