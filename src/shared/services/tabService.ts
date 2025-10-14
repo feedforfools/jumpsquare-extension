@@ -36,8 +36,14 @@ export class TabService {
 
   static isInVideoPlayer(url?: string): boolean {
     if (!url) return false;
-    // Prime Video player pages typically have /watch/ in the URL
-    return url.includes("primevideo.com") && url.includes("/watch/");
+
+    // Prime Video => no link change when in player
+    // TODO: needs a detection mechanism based on some other criteria (player DOM element?)
+    if (url.includes("primevideo.com")) {
+      return false;
+    }
+
+    return false;
   }
 
   static getSupportedSiteName(url?: string): string | null {
