@@ -77,6 +77,10 @@ export class MovieDetector {
     }
   }
 
+  movieIsIdentified(): boolean {
+    return !!(this.currentMovieTitle && this.currentMovieYear);
+  }
+
   private extractMovieInfo(): { title: string | null; year: string | null } {
     const title = this.extractTitle();
     const badgesInfo = this.extractFromBadges();

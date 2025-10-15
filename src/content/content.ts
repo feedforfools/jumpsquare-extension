@@ -33,7 +33,9 @@ class ContentScript {
   private setupNavigationTracking(): void {
     // Track URL changes for SPAs
     this.currentUrl = window.location.href;
-    this.wasOnMoviePage = this.isOnMovieOrVideoPage();
+    this.wasOnMoviePage =
+      TabService.isOnMoviePage(this.currentUrl) ||
+      TabService.isInVideoPlayer(this.currentUrl);
 
     // Listen for pushstate/popstate events (SPA navigation)
     const originalPushState = history.pushState;
@@ -69,7 +71,8 @@ class ContentScript {
     const newUrl = window.location.href;
     if (newUrl !== this.currentUrl) {
       const wasOnMoviePage = this.wasOnMoviePage;
-      const isNowOnMoviePage = this.isOnMovieOrVideoPage();
+      const isNowOnMoviePage =
+        TabService.isOnMoviePage(newUrl) || TabService.isInVideoPlayer(newUrl);
 
       if (wasOnMoviePage && !isNowOnMoviePage) {
         console.log("[HTJ Content] Left movie page, clearing state");
@@ -109,9 +112,17 @@ class ContentScript {
         this.handleUrlChange();
       }
 
-      if (this.isOnMovieOrVideoPage()) {
+      if (TabService.isOnMoviePage(window.location.href)) {
         this.movieDetector.identifyMovie();
-        this.videoTracker.attachVideoListener();
+      }
+
+      if (TabService.isInVideoPlayer(window.location.href)) {
+        if (!this.movieDetector.movieIsIdentified()) {
+          this.movieDetector.identifyMovie();
+        }
+        if (this.movieDetector.movieIsIdentified()) {
+          this.videoTracker.attachVideoListener();
+        }
       }
     });
 
@@ -121,22 +132,22 @@ class ContentScript {
     });
   }
 
-  private isOnMovieOrVideoPage(): boolean {
-    const currentUrl = window.location.href;
-    return (
-      TabService.isOnMoviePage(currentUrl) ||
-      TabService.isInVideoPlayer(currentUrl)
-    );
-  }
-
   private init(): void {
     if (!TabService.isOnSupportedSite(window.location.href)) {
       return;
     }
 
-    if (this.isOnMovieOrVideoPage()) {
+    if (TabService.isOnMoviePage(window.location.href)) {
       this.movieDetector.identifyMovie();
-      this.videoTracker.attachVideoListener();
+    }
+
+    if (TabService.isInVideoPlayer(window.location.href)) {
+      if (!this.movieDetector.movieIsIdentified()) {
+        this.movieDetector.identifyMovie();
+      }
+      if (this.movieDetector.movieIsIdentified()) {
+        this.videoTracker.attachVideoListener();
+      }
     }
   }
 
