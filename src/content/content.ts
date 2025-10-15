@@ -2,9 +2,10 @@ import { MovieDetector } from "./modules/MovieDetector.ts";
 import { VideoTracker } from "./modules/VideoTracker.ts";
 import { NotificationOrchestrator } from "./modules/NotificationOrchestrator.ts";
 import { MessageHandler } from "./modules/MessageHandler.ts";
-import { TabService } from "../shared/services/tabService.ts";
+import { ServiceRegistry } from "./strategies/ServiceRegistry.ts";
 
 class ContentScript {
+  private serviceRegistry: ServiceRegistry;
   private movieDetector: MovieDetector;
   private videoTracker: VideoTracker;
   private notificationOrchestrator: NotificationOrchestrator;
@@ -13,8 +14,9 @@ class ContentScript {
   private wasOnMoviePage: boolean = false;
 
   constructor() {
-    this.movieDetector = new MovieDetector();
-    this.videoTracker = new VideoTracker();
+    this.serviceRegistry = new ServiceRegistry();
+    this.movieDetector = new MovieDetector(this.serviceRegistry);
+    this.videoTracker = new VideoTracker(this.serviceRegistry);
     this.notificationOrchestrator = new NotificationOrchestrator();
     new MessageHandler(this.notificationOrchestrator);
 
@@ -33,9 +35,12 @@ class ContentScript {
   private setupNavigationTracking(): void {
     // Track URL changes for SPAs
     this.currentUrl = window.location.href;
-    this.wasOnMoviePage =
-      TabService.isOnMoviePage(this.currentUrl) ||
-      TabService.isInVideoPlayer(this.currentUrl);
+    const strategy = this.serviceRegistry.detectService(this.currentUrl);
+
+    this.wasOnMoviePage = strategy
+      ? strategy.isOnMoviePage(this.currentUrl) ||
+        strategy.isInVideoPlayer(this.currentUrl)
+      : false;
 
     // Listen for pushstate/popstate events (SPA navigation)
     const originalPushState = history.pushState;
@@ -69,22 +74,27 @@ class ContentScript {
 
   private handleUrlChange(): void {
     const newUrl = window.location.href;
-    if (newUrl !== this.currentUrl) {
-      const wasOnMoviePage = this.wasOnMoviePage;
-      const isNowOnMoviePage =
-        TabService.isOnMoviePage(newUrl) || TabService.isInVideoPlayer(newUrl);
+    const strategy = this.serviceRegistry.detectService(newUrl);
 
-      if (wasOnMoviePage && !isNowOnMoviePage) {
-        console.log("[HTJ Content] Left movie page, clearing state");
-        this.clearTabState();
-        this.movieDetector.reset();
-      } else if (wasOnMoviePage && isNowOnMoviePage) {
-        this.movieDetector.forceRedetection();
-      }
+    const wasOnMoviePage = this.wasOnMoviePage;
+    const isNowOnMoviePage = strategy
+      ? strategy.isOnMoviePage(newUrl) || strategy.isInVideoPlayer(newUrl)
+      : false;
 
-      this.currentUrl = newUrl;
-      this.wasOnMoviePage = isNowOnMoviePage;
+    console.log(
+      `[HTJ Content] URL changed - was: ${wasOnMoviePage}, now: ${isNowOnMoviePage}, URL: ${newUrl}`
+    );
+
+    if (wasOnMoviePage && !isNowOnMoviePage) {
+      console.log("[HTJ Content] Left movie page, clearing state");
+      this.clearTabState();
+      this.movieDetector.reset();
+    } else if (wasOnMoviePage && isNowOnMoviePage) {
+      this.movieDetector.forceRedetection();
     }
+
+    this.currentUrl = newUrl;
+    this.wasOnMoviePage = isNowOnMoviePage;
   }
 
   private clearTabState(): void {
@@ -104,7 +114,7 @@ class ContentScript {
 
   private setupDOMObserver(): void {
     this.observer = new MutationObserver(() => {
-      if (!TabService.isOnSupportedSite(window.location.href)) {
+      if (!this.serviceRegistry.isOnSupportedSite(window.location.href)) {
         return;
       }
 
@@ -112,11 +122,14 @@ class ContentScript {
         this.handleUrlChange();
       }
 
-      if (TabService.isOnMoviePage(window.location.href)) {
+      const strategy = this.serviceRegistry.getCurrentStrategy();
+      if (!strategy) return;
+
+      if (strategy.isOnMoviePage(window.location.href)) {
         this.movieDetector.identifyMovie();
       }
 
-      if (TabService.isInVideoPlayer(window.location.href)) {
+      if (strategy.isInVideoPlayer(window.location.href)) {
         if (!this.movieDetector.movieIsIdentified()) {
           this.movieDetector.identifyMovie();
         }
@@ -133,15 +146,18 @@ class ContentScript {
   }
 
   private init(): void {
-    if (!TabService.isOnSupportedSite(window.location.href)) {
+    if (!this.serviceRegistry.isOnSupportedSite(window.location.href)) {
       return;
     }
 
-    if (TabService.isOnMoviePage(window.location.href)) {
+    const strategy = this.serviceRegistry.getCurrentStrategy();
+    if (!strategy) return;
+
+    if (strategy.isOnMoviePage(window.location.href)) {
       this.movieDetector.identifyMovie();
     }
 
-    if (TabService.isInVideoPlayer(window.location.href)) {
+    if (strategy.isInVideoPlayer(window.location.href)) {
       if (!this.movieDetector.movieIsIdentified()) {
         this.movieDetector.identifyMovie();
       }
