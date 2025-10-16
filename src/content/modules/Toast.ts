@@ -8,7 +8,7 @@ export interface ToastConfig {
 
 const commonTextContext = `
       .htj-toast {
-        position: absolute !important;
+        position: fixed !important;
         top: 15vh !important;
         right: 20px !important;
         background: rgba(0, 0, 0, 0.95) !important;
