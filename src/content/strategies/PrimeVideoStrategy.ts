@@ -17,10 +17,40 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
   }
 
   isInVideoPlayer(url: string): boolean {
-    // Prime Video doesn't change URL in player
-    // TODO: needs a detection mechanism based on some other criteria (player DOM element?)
-    void url;
-    return !!document.querySelector(".atvwebplayersdk-player-container");
+    if (!this.isOnMoviePage(url)) return false;
+
+    // 1. Find the active player container in fullscreen-like view
+    const activePlayerContainer = document.querySelector(
+      "[id^='dv-web-player'].dv-player-fullscreen"
+    );
+
+    if (!activePlayerContainer) {
+      return false; // Player is not open in the large view
+    }
+
+    // 2. Find the dedicated title element within the active player
+    const titleElement = activePlayerContainer.querySelector(
+      ".atvwebplayersdk-title-text"
+    );
+
+    if (!titleElement) {
+      return false; // No title element means it's not the main movie
+    }
+
+    // 3. Check if title has actual text content
+    const titleText = (titleElement.textContent || "").trim();
+
+    if (!titleText) {
+      return false; // Empty title means it's not the main movie (likely a trailer)
+    }
+
+    // 4. Check if "trailer" appears anywhere in the title (case-insensitive)
+    if (/trailer/i.test(titleText)) {
+      return false; // It's a trailer
+    }
+
+    // If we have a non-empty title that's not a trailer, it's the movie
+    return true;
   }
 
   extractMovieInfo(): MovieInfo {
@@ -30,8 +60,26 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
     return { title, year };
   }
 
-  findVideoElement(): HTMLVideoElement | null {
-    return document.querySelector("video");
+  getVideoElement(): HTMLVideoElement | null {
+    // When in video player, find video within the active player container
+    const activePlayerContainer = document.querySelector(
+      "[id^='dv-web-player'].dv-player-fullscreen"
+    );
+
+    if (!activePlayerContainer) {
+      return null;
+    }
+
+    return activePlayerContainer.querySelector("video");
+  }
+
+  hasVideoPlayerClosed(): boolean {
+    // Check if the fullscreen player container exists
+    const activePlayerContainer = document.querySelector(
+      "[id^='dv-web-player'].dv-player-fullscreen"
+    );
+
+    return activePlayerContainer === null;
   }
 
   private extractTitle(): string | null {
@@ -55,14 +103,19 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
       '[data-testid="hero-title"]',
       ".av-detail-section h1",
       ".dv-detail-section h1",
-      ".av-dp-container h1",
+      ".av-dp-container .av-badges",
       ".title-wrapper h1",
     ];
 
     for (const selector of titleSelectors) {
       const titleElement = document.querySelector(selector);
       if (titleElement?.textContent?.trim()) {
-        return titleElement.textContent.trim();
+        const titleText = titleElement.textContent.trim();
+        // Skip if "trailer" appears anywhere in the title (case-insensitive)
+        if (/trailer/i.test(titleText)) {
+          continue;
+        }
+        return titleText;
       }
     }
     return null;

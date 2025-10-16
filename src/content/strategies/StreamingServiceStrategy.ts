@@ -20,6 +20,11 @@ export interface StreamingServiceStrategy {
   isInVideoPlayer(url: string): boolean;
 
   /**
+   * Checks if the video player was just closed/exited
+   */
+  hasVideoPlayerClosed(): boolean;
+
+  /**
    * Extracts movie information from the DOM
    */
   extractMovieInfo(): MovieInfo;
@@ -27,7 +32,7 @@ export interface StreamingServiceStrategy {
   /**
    * Finds and returns the video element
    */
-  findVideoElement(): HTMLVideoElement | null;
+  getVideoElement(): HTMLVideoElement | null;
 
   /**
    * Gets the service name

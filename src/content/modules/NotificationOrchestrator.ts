@@ -21,12 +21,6 @@ export class NotificationOrchestrator {
     this.setupEventListeners();
   }
 
-  private setupEventListeners(): void {
-    document.addEventListener("movieChanged", () => {
-      this.reset();
-    });
-  }
-
   setJumpscares(jumpscares: Jumpscare[]): void {
     this.scheduler.setJumpscares(jumpscares);
   }
@@ -47,8 +41,14 @@ export class NotificationOrchestrator {
     }
   }
 
-  private reset(): void {
+  reset(): void {
     this.scheduler.reset();
     this.notifications.reset();
+  }
+
+  private setupEventListeners(): void {
+    document.addEventListener("movieChanged", () => {
+      this.reset();
+    });
   }
 }

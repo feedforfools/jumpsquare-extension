@@ -12,6 +12,7 @@ class ContentScript {
   private observer!: MutationObserver;
   private currentUrl: string = "";
   private wasOnMoviePage: boolean = false;
+  private wasInVideoPlayer: boolean = false;
 
   constructor() {
     this.serviceRegistry = new ServiceRegistry();
@@ -125,6 +126,12 @@ class ContentScript {
       const strategy = this.serviceRegistry.getCurrentStrategy();
       if (!strategy) return;
 
+      if (this.wasInVideoPlayer && strategy.hasVideoPlayerClosed()) {
+        this.handleVideoPlayerClosed();
+        this.wasInVideoPlayer = false;
+        return;
+      }
+
       if (strategy.isOnMoviePage(window.location.href)) {
         this.movieDetector.identifyMovie();
       }
@@ -135,7 +142,11 @@ class ContentScript {
         }
         if (this.movieDetector.movieIsIdentified()) {
           this.videoTracker.attachVideoListener();
+          this.wasInVideoPlayer = true;
         }
+      } else {
+        this.videoTracker.cleanup();
+        this.wasInVideoPlayer = false;
       }
     });
 
@@ -143,6 +154,12 @@ class ContentScript {
       childList: true,
       subtree: true,
     });
+  }
+
+  private handleVideoPlayerClosed(): void {
+    this.videoTracker.cleanup();
+    this.notificationOrchestrator.reset();
+    console.log("[HTJ Content] Cleaned up after video player closure");
   }
 
   private init(): void {

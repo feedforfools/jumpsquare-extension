@@ -20,7 +20,7 @@ export class VideoTracker {
       return;
     }
 
-    const newVideoElement = strategy.findVideoElement();
+    const newVideoElement = strategy.getVideoElement();
     if (newVideoElement && newVideoElement !== this.videoElement) {
       console.log(
         "[HTJ VideoTracker] Video player found. Attaching time listener."

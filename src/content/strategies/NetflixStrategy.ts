@@ -28,9 +28,14 @@ export class NetflixStrategy implements StreamingServiceStrategy {
     return { title, year };
   }
 
-  findVideoElement(): HTMLVideoElement | null {
+  getVideoElement(): HTMLVideoElement | null {
     // TODO: verify if this works in Netflix
     return document.querySelector("video");
+  }
+
+  hasVideoPlayerClosed(): boolean {
+    // Netflix uses URL changes => we rely on URL-based detection
+    return false;
   }
 
   private extractTitle(): string | null {
