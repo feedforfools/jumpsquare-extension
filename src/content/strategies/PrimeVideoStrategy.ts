@@ -12,6 +12,22 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
     return url.includes("primevideo.com");
   }
 
+  getMovieIdFromUrl(url: string): string | null {
+    // Examples:
+    // https://www.primevideo.com/detail/0GQF.../
+    // https://www.primevideo.com/gp/video/detail/0GQF.../?...
+    const detailRegex = /\/detail\/([^/?#]+)/;
+    const gpDetailRegex = /\/gp\/video\/detail\/([^/?#]+)/;
+
+    const m1 = url.match(detailRegex);
+    if (m1 && m1[1]) return m1[1];
+
+    const m2 = url.match(gpDetailRegex);
+    if (m2 && m2[1]) return m2[1];
+
+    return null;
+  }
+
   isOnMoviePage(url: string): boolean {
     return url.includes("/detail/") || url.includes("/gp/video/detail/");
   }
@@ -53,7 +69,17 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
     return true;
   }
 
-  extractMovieInfo(): MovieInfo {
+  async extractMovieInfo(movieId?: string): Promise<MovieInfo> {
+    // If movieId is provided, wait for it to appear in DOM first
+    if (movieId) {
+      const isReady = await this.waitForMovieIdInDOM(movieId);
+      if (!isReady) {
+        console.warn(
+          `[HTJ PrimeVideo Debug] Proceeding with extraction despite movie ID not found in DOM`
+        );
+      }
+    }
+
     const title = this.extractTitle();
     const { year } = this.extractFromBadges();
 
@@ -82,6 +108,44 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
     return activePlayerContainer === null;
   }
 
+  private async waitForMovieIdInDOM(
+    movieId: string,
+    maxAttempts: number = 150, // 150 attempts * 200ms = 30 seconds max
+    intervalMs: number = 200
+  ): Promise<boolean> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      // A set of selectors where the new movie ID should appear once the page is ready
+      const selectors = [
+        `a[data-automation-id="dp-atf-play-button"][href*="${movieId}"]`, // Play button
+        `input[name="titleID"][value="${movieId}"]`, // Watchlist hidden input
+        `a[aria-label="Go ad free"][href*="${movieId}"]`, // "Go ad free" button
+      ];
+
+      const foundElements = selectors.map((selector) => {
+        const element = document.querySelector(selector);
+        return !!element;
+      });
+
+      const foundCount = foundElements.filter((found) => found).length;
+
+      // Require all 3 elements to be present
+      if (foundCount === selectors.length) {
+        return true;
+      }
+
+      if (attempt < maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, intervalMs));
+      }
+    }
+
+    console.warn(
+      `[HTJ PrimeVideo] Movie ID ${movieId} not found in DOM after ${maxAttempts} attempts (${
+        maxAttempts * intervalMs
+      }ms). Extraction might fail.`
+    );
+    return false;
+  }
+
   private extractTitle(): string | null {
     const textTitle = this.extractTitleFromText();
     const imageTitle = this.extractTitleFromImage();
@@ -98,7 +162,7 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
 
   private extractTitleFromText(): string | null {
     const titleSelectors = [
-      'h1[data-automation-id="title"]',
+      'h1[data-automation-id="title"]', // This is the only valid apparently
       ".atvwebplayersdk-title-text",
       '[data-testid="hero-title"]',
       ".av-detail-section h1",

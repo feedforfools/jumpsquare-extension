@@ -27,7 +27,12 @@ export interface StreamingServiceStrategy {
   /**
    * Extracts movie information from the DOM
    */
-  extractMovieInfo(): MovieInfo;
+  extractMovieInfo(movieId?: string): MovieInfo | Promise<MovieInfo>;
+
+  /**
+   * Extracts the movie ID from the URL
+   */
+  getMovieIdFromUrl(url: string): string | null;
 
   /**
    * Finds and returns the video element

@@ -13,6 +13,7 @@ class ContentScript {
   private currentUrl: string = "";
   private wasOnMoviePage: boolean = false;
   private wasInVideoPlayer: boolean = false;
+  private currentMovieId: string | null = null;
 
   constructor() {
     this.serviceRegistry = new ServiceRegistry();
@@ -42,6 +43,10 @@ class ContentScript {
       ? strategy.isOnMoviePage(this.currentUrl) ||
         strategy.isInVideoPlayer(this.currentUrl)
       : false;
+
+    this.currentMovieId = strategy
+      ? strategy.getMovieIdFromUrl(this.currentUrl)
+      : null;
 
     // Listen for pushstate/popstate events (SPA navigation)
     const originalPushState = history.pushState;
@@ -82,20 +87,29 @@ class ContentScript {
       ? strategy.isOnMoviePage(newUrl) || strategy.isInVideoPlayer(newUrl)
       : false;
 
-    console.log(
-      `[HTJ Content] URL changed - was: ${wasOnMoviePage}, now: ${isNowOnMoviePage}, URL: ${newUrl}`
-    );
+    const newMovieId = strategy ? strategy.getMovieIdFromUrl(newUrl) : null;
 
     if (wasOnMoviePage && !isNowOnMoviePage) {
       console.log("[HTJ Content] Left movie page, clearing state");
       this.clearTabState();
       this.movieDetector.reset();
-    } else if (wasOnMoviePage && isNowOnMoviePage) {
-      this.movieDetector.forceRedetection();
+      this.notificationOrchestrator.reset();
+    } else if (isNowOnMoviePage) {
+      if (
+        this.currentMovieId &&
+        newMovieId &&
+        this.currentMovieId !== newMovieId
+      ) {
+        console.log("[HTJ Content] Movie ID changed, resetting notifications");
+        this.clearTabState();
+        this.notificationOrchestrator.reset();
+      }
+      this.movieDetector.identifyMovie();
     }
 
     this.currentUrl = newUrl;
     this.wasOnMoviePage = isNowOnMoviePage;
+    this.currentMovieId = newMovieId ?? null;
   }
 
   private clearTabState(): void {

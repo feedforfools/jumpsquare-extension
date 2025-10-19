@@ -17,8 +17,6 @@ export class NotificationOrchestrator {
     this.scheduler.setJumpscareCallback((event: JumpscareEvent) => {
       this.notifications.handleJumpscareEvent(event);
     });
-
-    this.setupEventListeners();
   }
 
   setJumpscares(jumpscares: Jumpscare[]): void {
@@ -44,11 +42,5 @@ export class NotificationOrchestrator {
   reset(): void {
     this.scheduler.reset();
     this.notifications.reset();
-  }
-
-  private setupEventListeners(): void {
-    document.addEventListener("movieChanged", () => {
-      this.reset();
-    });
   }
 }
