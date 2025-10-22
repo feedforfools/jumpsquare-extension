@@ -12,20 +12,44 @@ export class NetflixStrategy implements StreamingServiceStrategy {
     return url.includes("netflix.com");
   }
 
+  getMovieIdFromUrl(url: string): string | null {
+    // Examples:
+    // https://www.netflix.com/watch/80100172
+    // https://www.netflix.com/browse?jbv=80100172&...
+    // https://www.netflix.com/title/80100172
+    const watchMatch = url.match(/\/watch\/(\d+)/);
+    if (watchMatch && watchMatch[1]) return watchMatch[1];
+
+    const titleMatch = url.match(/\/title\/(\d+)/);
+    if (titleMatch && titleMatch[1]) return titleMatch[1];
+
+    const jbvMatch = url.match(/[?&]jbv=(\d+)/);
+    if (jbvMatch && jbvMatch[1]) return jbvMatch[1];
+
+    return null;
+  }
+
   isOnMoviePage(url: string): boolean {
-    return url.includes("/browse/") && url.includes("?jbv=");
+    return (
+      this.matches(url) && (url.includes("?jbv=") || url.includes("/title/"))
+    );
   }
 
   isInVideoPlayer(url: string): boolean {
-    return url.includes("/watch/");
+    return this.matches(url) && url.includes("/watch/");
   }
 
-  extractMovieInfo(): MovieInfo {
-    // Netflix-specific extraction logic
-    const title = this.extractTitle();
-    const year = this.extractYear();
+  async extractMovieInfo(movieId?: string): Promise<MovieInfo> {
+    if (!movieId) {
+      movieId = this.getMovieIdFromUrl(window.location.href) || undefined;
+    }
 
-    return { title, year };
+    if (!movieId) {
+      console.warn("[HTJ Netflix] No movie ID available for extraction");
+      return { title: null, year: null };
+    }
+
+    return await this.extractFromNetworkRequest(movieId);
   }
 
   getVideoElement(): HTMLVideoElement | null {
@@ -34,54 +58,51 @@ export class NetflixStrategy implements StreamingServiceStrategy {
   }
 
   hasVideoPlayerClosed(): boolean {
-    // Netflix uses URL changes => we rely on URL-based detection
-    return false;
+    // Netflix changes URL away from /watch/ when exiting video player
+    return !this.isInVideoPlayer(window.location.href);
   }
 
-  private extractTitle(): string | null {
-    // Netflix-specific title selectors
-    // TODO: verify and improve these selectors
-    const titleSelectors = [
-      ".title-title",
-      '[data-uia="video-title"]',
-      ".previewModal--player-titleTreatment-logo",
-    ];
+  /**
+   * Extract metadata by fetching the Netflix API directly
+   */
+  private async extractFromNetworkRequest(movieId: string): Promise<MovieInfo> {
+    console.log(
+      "[HTJ Netflix] Fetching metadata from Netflix API for movie",
+      movieId
+    );
 
-    for (const selector of titleSelectors) {
-      const titleElement = document.querySelector(selector);
-      if (titleElement?.textContent?.trim()) {
-        return titleElement.textContent.trim();
+    try {
+      const apiUrl = `https://www.netflix.com/nq/website/memberapi/release/metadata?movieid=${movieId}`;
+      const response = await fetch(apiUrl, {
+        credentials: "include", // Include cookies for authentication
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
       }
-    }
 
-    // Try getting from page title as fallback
-    const pageTitle = document.title;
-    if (pageTitle && pageTitle !== "Netflix") {
-      return pageTitle.replace(" - Netflix", "").trim();
-    }
+      const data = await response.json();
 
-    return null;
-  }
-
-  private extractYear(): string | null {
-    // Netflix-specific year extraction
-    // TODO: verify and improve these selectors
-    const metadataSelectors = [
-      ".videoMetadata--first-line",
-      ".preview-modal-metadata",
-    ];
-
-    for (const selector of metadataSelectors) {
-      const metadataElement = document.querySelector(selector);
-      if (metadataElement?.textContent) {
-        const yearMatch =
-          metadataElement.textContent.match(/\b(19\d\d|20\d\d)\b/);
-        if (yearMatch) {
-          return yearMatch[0];
-        }
+      if (data?.video?.title && data?.video?.year) {
+        console.log(
+          "[HTJ Netflix] Successfully extracted metadata:",
+          data.video.title,
+          `(${data.video.year})`
+        );
+        return {
+          title: data.video.title,
+          year: String(data.video.year),
+        };
       }
-    }
 
-    return null;
+      console.warn(
+        "[HTJ Netflix] API response missing expected video data:",
+        data
+      );
+      return { title: null, year: null };
+    } catch (error) {
+      console.error("[HTJ Netflix] Network request extraction failed:", error);
+      return { title: null, year: null };
+    }
   }
 }
