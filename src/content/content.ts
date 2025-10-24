@@ -3,6 +3,7 @@ import { VideoTracker } from "./modules/VideoTracker.ts";
 import { NotificationOrchestrator } from "./modules/NotificationOrchestrator.ts";
 import { MessageHandler } from "./modules/MessageHandler.ts";
 import { ServiceRegistry } from "./strategies/ServiceRegistry.ts";
+import { contentLogger } from "../shared/utils/logger.js";
 
 class ContentScript {
   private serviceRegistry: ServiceRegistry;
@@ -90,7 +91,7 @@ class ContentScript {
     const newMovieId = strategy ? strategy.getMovieIdFromUrl(newUrl) : null;
 
     if (wasOnMoviePage && !isNowOnMoviePage) {
-      console.log("[HTJ Content] Left movie page, clearing state");
+      contentLogger.log("Left movie page, clearing state");
       this.clearTabState();
       this.movieDetector.reset();
       this.notificationOrchestrator.reset();
@@ -100,7 +101,7 @@ class ContentScript {
         newMovieId &&
         this.currentMovieId !== newMovieId
       ) {
-        console.log("[HTJ Content] Movie ID changed, resetting notifications");
+        contentLogger.log("Movie ID changed, resetting notifications");
         this.clearTabState();
         this.notificationOrchestrator.reset();
       }
@@ -120,10 +121,7 @@ class ContentScript {
         type: "CLEAR_TAB_STATE",
       })
       .catch((error) => {
-        console.error(
-          "[HTJ Content] Failed to send clear state message:",
-          error
-        );
+        contentLogger.error("Failed to send clear state message:", error);
       });
   }
 
@@ -173,7 +171,7 @@ class ContentScript {
   private handleVideoPlayerClosed(): void {
     this.videoTracker.cleanup();
     this.notificationOrchestrator.reset();
-    console.log("[HTJ Content] Cleaned up after video player closure");
+    contentLogger.log("Cleaned up after video player closure");
   }
 
   private init(): void {

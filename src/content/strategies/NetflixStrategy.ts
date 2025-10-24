@@ -2,6 +2,7 @@ import type {
   StreamingServiceStrategy,
   MovieInfo,
 } from "./StreamingServiceStrategy.js";
+import { contentLogger } from "../../shared/utils/logger.js";
 
 export class NetflixStrategy implements StreamingServiceStrategy {
   getServiceName(): string {
@@ -45,7 +46,7 @@ export class NetflixStrategy implements StreamingServiceStrategy {
     }
 
     if (!movieId) {
-      console.warn("[HTJ Netflix] No movie ID available for extraction");
+      contentLogger.warn("No movie ID available for extraction");
       return { title: null, year: null };
     }
 
@@ -66,10 +67,7 @@ export class NetflixStrategy implements StreamingServiceStrategy {
    * Extract metadata by fetching the Netflix API directly
    */
   private async extractFromNetworkRequest(movieId: string): Promise<MovieInfo> {
-    console.log(
-      "[HTJ Netflix] Fetching metadata from Netflix API for movie",
-      movieId
-    );
+    contentLogger.log("Fetching metadata from Netflix API for movie", movieId);
 
     try {
       const apiUrl = `https://www.netflix.com/nq/website/memberapi/release/metadata?movieid=${movieId}`;
@@ -84,8 +82,8 @@ export class NetflixStrategy implements StreamingServiceStrategy {
       const data = await response.json();
 
       if (data?.video?.title && data?.video?.year) {
-        console.log(
-          "[HTJ Netflix] Successfully extracted metadata:",
+        contentLogger.log(
+          "Successfully extracted metadata:",
           data.video.title,
           `(${data.video.year})`
         );
@@ -95,13 +93,10 @@ export class NetflixStrategy implements StreamingServiceStrategy {
         };
       }
 
-      console.warn(
-        "[HTJ Netflix] API response missing expected video data:",
-        data
-      );
+      contentLogger.warn("API response missing expected video data:", data);
       return { title: null, year: null };
     } catch (error) {
-      console.error("[HTJ Netflix] Network request extraction failed:", error);
+      contentLogger.error("Network request extraction failed:", error);
       return { title: null, year: null };
     }
   }

@@ -1,6 +1,7 @@
 import type { Movie } from "../../types/index.js";
 import type { JumpscareEvent } from "./JumpscareScheduler.js";
 import { Toast, type ToastConfig } from "./Toast.js";
+import { contentLogger } from "../../shared/utils/logger.js";
 
 export class NotificationPresenter {
   private toast = new Toast();
@@ -28,7 +29,7 @@ export class NotificationPresenter {
     const config = this.createIntroToastConfig();
     this.toast.showToast(config);
     this.hasShownWelcome = true;
-    console.log("[HTJ Welcome] Displayed welcome message");
+    contentLogger.log("Displayed welcome message");
   }
 
   handleJumpscareEvent(event: JumpscareEvent): void {
@@ -49,7 +50,7 @@ export class NotificationPresenter {
     this.hasShownWelcome = false;
     this.currentMovie = null;
     this.toast.clearToast();
-    console.log("[HTJ Notification] Reset notifications");
+    contentLogger.log("Reset notifications");
   }
 
   private createIntroToastConfig(): ToastConfig {
@@ -91,10 +92,10 @@ export class NotificationPresenter {
     const { jumpscare } = event;
     const isMajor = jumpscare.category === "major";
 
-    console.log(`🎬 JUMPSCARE ALERT #${event.jumpscareIndex}:`);
-    console.log(`   Category: ${jumpscare.category.toUpperCase()}`);
-    console.log(`   Severity: ${isMajor ? "MAJOR" : "Minor"}`);
-    console.log(`   Time remaining: ${event.timeRemaining.toFixed(1)}s`);
+    contentLogger.log(`🎬 JUMPSCARE ALERT #${event.jumpscareIndex}:`);
+    contentLogger.log(`   Category: ${jumpscare.category.toUpperCase()}`);
+    contentLogger.log(`   Severity: ${isMajor ? "MAJOR" : "Minor"}`);
+    contentLogger.log(`   Time remaining: ${event.timeRemaining.toFixed(1)}s`);
   }
 
   private createWelcomeMessage(movie: Movie): string {

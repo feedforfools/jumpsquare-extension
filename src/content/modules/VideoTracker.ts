@@ -1,4 +1,5 @@
 import type { ServiceRegistry } from "../strategies/ServiceRegistry.js";
+import { contentLogger } from "../../shared/utils/logger.js";
 
 export class VideoTracker {
   private videoElement: HTMLVideoElement | null = null;
@@ -16,15 +17,13 @@ export class VideoTracker {
   attachVideoListener(): void {
     const strategy = this.serviceRegistry.getCurrentStrategy();
     if (!strategy) {
-      console.warn("[HTJ VideoTracker] No strategy available");
+      contentLogger.warn("No strategy available");
       return;
     }
 
     const newVideoElement = strategy.getVideoElement();
     if (newVideoElement && newVideoElement !== this.videoElement) {
-      console.log(
-        "[HTJ VideoTracker] Video player found. Attaching time listener."
-      );
+      contentLogger.log("Video player found. Attaching time listener.");
 
       if (this.videoElement) {
         this.videoElement.removeEventListener(

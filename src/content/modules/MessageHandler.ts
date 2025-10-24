@@ -1,4 +1,5 @@
 import type { NotificationOrchestrator } from "./NotificationOrchestrator.js";
+import { contentLogger } from "../../shared/utils/logger.js";
 
 export class MessageHandler {
   private notificationOrchestrator: NotificationOrchestrator;
@@ -12,8 +13,8 @@ export class MessageHandler {
     chrome.runtime.onMessage.addListener((message) => {
       switch (message.type) {
         case "JUMPSCARE_DATA":
-          console.log(
-            `[HTJ Content] Received ${message.payload.jumpscares.length} jumpscares for ${message.payload.movieTitle}`
+          contentLogger.log(
+            `Received ${message.payload.jumpscares.length} jumpscares for ${message.payload.movieTitle}`
           );
 
           // Create movie object from payload
@@ -33,10 +34,8 @@ export class MessageHandler {
 
         case "TOGGLE_STATE":
           this.notificationOrchestrator.setEnabled(message.payload.isEnabled);
-          console.log(
-            `[HTJ Content] Extension ${
-              message.payload.isEnabled ? "enabled" : "disabled"
-            }`
+          contentLogger.log(
+            `Extension ${message.payload.isEnabled ? "enabled" : "disabled"}`
           );
           break;
       }

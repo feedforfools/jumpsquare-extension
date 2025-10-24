@@ -2,6 +2,7 @@ import type {
   StreamingServiceStrategy,
   MovieInfo,
 } from "./StreamingServiceStrategy.js";
+import { contentLogger } from "../../shared/utils/logger.js";
 
 export class PrimeVideoStrategy implements StreamingServiceStrategy {
   getServiceName(): string {
@@ -74,8 +75,8 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
     if (movieId) {
       const isReady = await this.waitForMovieIdInDOM(movieId);
       if (!isReady) {
-        console.warn(
-          `[HTJ PrimeVideo Debug] Proceeding with extraction despite movie ID not found in DOM`
+        contentLogger.warn(
+          `Proceeding with extraction despite movie ID not found in DOM`
         );
       }
     }
@@ -138,8 +139,8 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
       }
     }
 
-    console.warn(
-      `[HTJ PrimeVideo] Movie ID ${movieId} not found in DOM after ${maxAttempts} attempts (${
+    contentLogger.warn(
+      `Movie ID ${movieId} not found in DOM after ${maxAttempts} attempts (${
         maxAttempts * intervalMs
       }ms). Extraction might fail.`
     );

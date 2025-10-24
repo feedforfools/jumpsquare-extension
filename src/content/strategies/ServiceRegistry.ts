@@ -1,6 +1,7 @@
 import type { StreamingServiceStrategy } from "./StreamingServiceStrategy.js";
 import { PrimeVideoStrategy } from "./PrimeVideoStrategy.js";
 import { NetflixStrategy } from "./NetflixStrategy.js";
+import { contentLogger } from "../../shared/utils/logger.js";
 
 export class ServiceRegistry {
   private strategies: StreamingServiceStrategy[] = [];
@@ -20,9 +21,7 @@ export class ServiceRegistry {
     const strategy = this.strategies.find((s) => s.matches(url));
     if (strategy) {
       this.currentStrategy = strategy;
-      console.log(
-        `[HTJ ServiceRegistry] Detected service: ${strategy.getServiceName()}`
-      );
+      contentLogger.log(`Detected service: ${strategy.getServiceName()}`);
       return strategy;
     }
     this.currentStrategy = null;

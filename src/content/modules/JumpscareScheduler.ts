@@ -1,5 +1,6 @@
 import type { Jumpscare } from "../../types/index.js";
 import { WARNING_WINDOW_SECONDS } from "../../shared/utils/constants.js";
+import { contentLogger } from "../../shared/utils/logger.js";
 
 export interface JumpscareEvent {
   jumpscareIndex: number;
@@ -47,8 +48,8 @@ export class JumpscareScheduler {
       if (this.currentlyTriggeredIndex !== window.jumpscareIndex) {
         const timeRemaining = window.jumpscare.timeInSeconds - currentTime;
 
-        console.log(
-          `[HTJ Scheduler] Triggering jumpscare alert #${
+        contentLogger.log(
+          `Triggering jumpscare alert #${
             window.jumpscareIndex + 1
           } - ${timeRemaining.toFixed(1)}s remaining`
         );
@@ -71,7 +72,8 @@ export class JumpscareScheduler {
   private buildLookupStructures(): void {
     this.jumpscareWindows = [];
     this.timeToWindowMap.clear();
-
+    this.currentlyTriggeredIndex = null;
+    contentLogger.log("Reset scheduler state");
     this.jumpscares.forEach((jumpscare, index) => {
       const startTime = jumpscare.timeInSeconds - WARNING_WINDOW_SECONDS;
       const endTime = jumpscare.timeInSeconds;
@@ -103,6 +105,6 @@ export class JumpscareScheduler {
     this.jumpscareWindows = [];
     this.timeToWindowMap.clear();
     this.currentlyTriggeredIndex = null;
-    console.log("[HTJ Scheduler] Reset scheduler state");
+    contentLogger.log("Reset scheduler state");
   }
 }

@@ -1,5 +1,6 @@
 import type { MovieDetectedMessage } from "../../types/messaging.js";
 import type { ServiceRegistry } from "../strategies/ServiceRegistry.js";
+import { contentLogger } from "../../shared/utils/logger.js";
 
 export class MovieDetector {
   private currentMovieTitle: string | null = null;
@@ -24,9 +25,7 @@ export class MovieDetector {
 
     const strategy = this.serviceRegistry.getCurrentStrategy();
     if (!strategy) {
-      console.warn(
-        "[HTJ MovieDetector] No strategy available for current service"
-      );
+      contentLogger.warn("No strategy available for current service");
       return;
     }
 
@@ -117,7 +116,7 @@ export class MovieDetector {
         this.scheduleRetry();
       }
     } catch (error) {
-      console.error("[HTJ MovieDetector] Error extracting movie info:", error);
+      contentLogger.error("Error extracting movie info:", error);
       this.scheduleRetry();
     } finally {
       this.isDetecting = false; // Reset the flag when done
@@ -130,8 +129,8 @@ export class MovieDetector {
   }
 
   private emitDetected(title: string, year: string | null): void {
-    console.log(
-      `[HTJ Content] Detected movie: ${title}${
+    contentLogger.log(
+      `Detected movie: ${title}${
         year ? ` (${year})` : ""
       }. Sending to background.`
     );
@@ -140,10 +139,7 @@ export class MovieDetector {
       payload: { title, year },
     };
     chrome.runtime.sendMessage(message).catch((error) => {
-      console.error(
-        "[HTJ Content] Failed to send movie detection message:",
-        error
-      );
+      contentLogger.error("Failed to send movie detection message:", error);
     });
   }
 }

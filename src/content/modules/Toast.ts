@@ -1,3 +1,5 @@
+import { contentLogger } from "../../shared/utils/logger.js";
+
 export interface ToastConfig {
   id: string;
   message: string;
@@ -115,7 +117,7 @@ export class Toast {
 
     fullscreenEvents.forEach((event) => {
       document.addEventListener(event, () => {
-        console.log("[HTJ Display] Fullscreen state changed");
+        contentLogger.log("Fullscreen state changed");
         this.handleFullscreenChange();
       });
     });
@@ -136,8 +138,8 @@ export class Toast {
     if (this.config !== null) {
       const toastElement = document.getElementById(this.config.id);
       if (toastElement && !correctContainer.contains(toastElement)) {
-        console.log(
-          `[HTJ Display] Moving toast ${this.config.id} to correct container`
+        contentLogger.log(
+          `Moving toast ${this.config.id} to correct container`
         );
         correctContainer.appendChild(toastElement);
       }
