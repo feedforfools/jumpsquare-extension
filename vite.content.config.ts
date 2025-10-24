@@ -1,9 +1,10 @@
 import { defineConfig } from "vite";
 import { resolve } from "path";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   define: {
     "process.env": {},
+    __DEV__: mode === "development",
   },
   build: {
     emptyOutDir: false,
@@ -19,4 +20,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

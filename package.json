@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && vite build --config vite.content.config.ts",
+    "build": "tsc && vite build --mode production && vite build --config vite.content.config.ts --mode production",
+    "build:dev": "tsc && vite build --mode development && vite build --config vite.content.config.ts --mode development",
     "build:content": "vite build --config vite.content.config.ts",
     "preview": "vite preview"
   },
