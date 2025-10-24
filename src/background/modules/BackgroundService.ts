@@ -1,4 +1,5 @@
 import type { TabState } from "../../types/index.js";
+import { backgroundLogger } from "../../shared/utils/logger.js";
 import { MovieHandler } from "./MovieHandler.js";
 import { TabStateManager } from "./TabStateManager.js";
 
@@ -25,8 +26,8 @@ export class BackgroundService {
   async handleToggleState(tabId: number, isEnabled: boolean): Promise<void> {
     const state = await this.tabStateManager.getTabState(tabId);
     state.isEnabled = isEnabled;
-    console.log(
-      `[HTJ Background] Tab ${tabId} state toggled to: ${
+    backgroundLogger.log(
+      `Tab ${tabId} state toggled to: ${
         state.isEnabled ? "Enabled" : "Disabled"
       }`
     );

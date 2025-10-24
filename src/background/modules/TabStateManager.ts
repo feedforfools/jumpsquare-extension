@@ -1,4 +1,5 @@
 import type { TabState } from "../../types/index.js";
+import { backgroundLogger } from "../../shared/utils/logger.js";
 
 export class TabStateManager {
   private tabStates = new Map<number, TabState>();
@@ -26,18 +27,14 @@ export class TabStateManager {
     await chrome.storage.session.set({
       [`tab_${tabId}`]: state,
     });
-    console.log(
-      `[HTJ Background] Saved state for tab ${tabId} to session storage`
-    );
+    backgroundLogger.log(`Saved state for tab ${tabId} to session storage`);
   }
 
   async clearTabState(tabId: number): Promise<void> {
     this.tabStates.delete(tabId); // Clear in-memory state
     await this.deleteTabState(tabId); // Remove from session storage
 
-    console.log(
-      `[HTJ Background] Cleared and deleted movie state for tab ${tabId}`
-    );
+    backgroundLogger.log(`Cleared and deleted movie state for tab ${tabId}`);
   }
 
   private async loadTabState(tabId: number): Promise<TabState | null> {
@@ -80,16 +77,13 @@ export class TabStateManager {
                 }
               : null,
         };
-        console.log(
-          `[HTJ Background] Loaded and validated state for tab ${tabId} from session storage`
+        backgroundLogger.log(
+          `Loaded and validated state for tab ${tabId} from session storage`
         );
         return validatedState;
       }
     } catch (error) {
-      console.error(
-        `[HTJ Background] Failed to load state for tab ${tabId}:`,
-        error
-      );
+      backgroundLogger.error(`Failed to load state for tab ${tabId}:`, error);
     }
     return null;
   }
@@ -97,12 +91,9 @@ export class TabStateManager {
   private async deleteTabState(tabId: number): Promise<void> {
     try {
       await chrome.storage.session.remove(`tab_${tabId}`);
-      console.log(`[HTJ Background] Deleted persisted state for tab ${tabId}`);
+      backgroundLogger.log(`Deleted persisted state for tab ${tabId}`);
     } catch (error) {
-      console.error(
-        `[HTJ Background] Failed to delete state for tab ${tabId}:`,
-        error
-      );
+      backgroundLogger.error(`Failed to delete state for tab ${tabId}:`, error);
     }
   }
 }

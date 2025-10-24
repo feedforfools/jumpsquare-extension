@@ -1,4 +1,5 @@
 import type { Jumpscare, Movie } from "../../types/index.js";
+import { backgroundLogger } from "../../shared/utils/logger.js";
 import { InstanceService } from "./InstanceService.js";
 
 export interface JumpscareApiResponse {
@@ -14,7 +15,7 @@ export class JumpscareApiService {
     title: string,
     year: string | null
   ): Promise<JumpscareApiResponse> {
-    console.log(`[HTJ Background] Fetching jumpscares for: ${title}`);
+    backgroundLogger.log(`Fetching jumpscares for: ${title}`);
 
     const params = new URLSearchParams({ title });
     if (year) params.append("year", year);
@@ -33,9 +34,7 @@ export class JumpscareApiService {
 
       if (!response.ok) {
         if (response.status === 404) {
-          console.log(
-            `[HTJ Background] Movie "${title}" not found in database.`
-          );
+          backgroundLogger.log(`Movie "${title}" not found in database.`);
           return { movie: null, jumpscares: [], found: false };
         }
         throw new Error(`API Error: ${response.status}`);
@@ -54,7 +53,7 @@ export class JumpscareApiService {
 
       return { movie: data.movie, jumpscares, found: true };
     } catch (error) {
-      console.error("[HTJ Background] Failed to fetch jumpscares:", error);
+      backgroundLogger.error("Failed to fetch jumpscares:", error);
       return { movie: null, jumpscares: [], found: false };
     }
   }

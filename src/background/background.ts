@@ -1,6 +1,7 @@
 import { BackgroundService } from "./modules/BackgroundService.js";
 import { MessageHandler } from "./modules/MessageHandler.js";
 import { InstanceService } from "./modules/InstanceService.js";
+import { backgroundLogger } from "../shared/utils/logger.js";
 
 class ExtensionBackground {
   private backgroundService: BackgroundService;
@@ -13,7 +14,7 @@ class ExtensionBackground {
   }
 
   private init(): void {
-    console.log("[HTJ Background] Extension background script initialized");
+    backgroundLogger.log("Extension background script initialized");
     this.setupEventListeners();
     InstanceService.getInstanceId();
   }

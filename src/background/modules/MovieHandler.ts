@@ -1,4 +1,5 @@
 import type { JumpscareDataMessage } from "../../types/messaging.js";
+import { backgroundLogger } from "../../shared/utils/logger.js";
 import type { TabStateManager } from "./TabStateManager.js";
 import { JumpscareApiService } from "./JumpscareApiService.js";
 
@@ -50,8 +51,8 @@ export class MovieHandler {
 
     await this.tabStateManager.saveTabState(tabId);
 
-    console.log(
-      `[HTJ Background] Loaded ${jumpscares.length} jumpscares for "${state.movie.title}" in tab ${tabId}. Found in DB: ${found}. Sending to content script.`
+    backgroundLogger.log(
+      `Loaded ${jumpscares.length} jumpscares for "${state.movie.title}" in tab ${tabId}. Found in DB: ${found}. Sending to content script.`
     );
 
     // Send jumpscares to content script
@@ -68,8 +69,8 @@ export class MovieHandler {
     try {
       await chrome.tabs.sendMessage(tabId, message);
     } catch (error) {
-      console.error(
-        `[HTJ Background] Failed to send jumpscares to tab ${tabId}:`,
+      backgroundLogger.error(
+        `Failed to send jumpscares to tab ${tabId}:`,
         error
       );
     }

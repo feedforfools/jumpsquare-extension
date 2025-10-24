@@ -1,3 +1,4 @@
+import { backgroundLogger } from "../../shared/utils/logger.js";
 import type { BackgroundService } from "./BackgroundService.js";
 
 export class MessageHandler {
@@ -35,9 +36,7 @@ export class MessageHandler {
         // For popup requests get the tab ID from the message payload
         const requestedTabId = message.tabId;
         if (!requestedTabId) {
-          console.error(
-            "[HTJ Background] No tab ID provided in GET_TAB_STATE request"
-          );
+          backgroundLogger.error("No tab ID provided in GET_TAB_STATE request");
           sendResponse(null);
           return true;
         }
@@ -48,7 +47,7 @@ export class MessageHandler {
             sendResponse(state);
           })
           .catch((error) => {
-            console.error(`[HTJ Background] Error getting tab state:`, error);
+            backgroundLogger.error(`Error getting tab state:`, error);
             sendResponse(null);
           });
         return true; // Keep message channel open for async response
