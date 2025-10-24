@@ -56,6 +56,7 @@ class PopupApp {
       if (bgState && bgState.movie) {
         this.state.currentPage = "movie-detected";
         this.state.movie = {
+          id: bgState.movie.id,
           title: bgState.movie.title,
           year: bgState.movie.year || undefined,
           jumpscareCount: bgState.movie.jumpscares.length,
@@ -163,6 +164,7 @@ class PopupApp {
         ? "bg-orange-500"
         : "bg-green-500"
       : "bg-yellow-500";
+
     mainElement.innerHTML = `
       <div class="text-center space-y-4">
         <div class="w-16 h-16 ${iconColor} rounded-full flex items-center justify-center mx-auto">
@@ -186,6 +188,22 @@ class PopupApp {
         <div class="bg-card-bg p-4 rounded-lg space-y-2">
           <p class="text-sm ${statusColor}">${statusText}</p>
           <p class="text-xs text-gray-400">Start playing to begin monitoring</p>
+          ${
+            movie.isInDb && movie.id
+              ? `
+          <a 
+            href="https://www.heresthejump.com/movie/${movie.id}" 
+            target="_blank"
+            class="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-accent hover:bg-orange-600 text-white text-sm font-medium rounded transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+            View on HereTheJump.com
+          </a>
+          `
+              : ""
+          }
         </div>
       </div>
     `;
