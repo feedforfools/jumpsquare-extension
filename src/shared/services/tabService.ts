@@ -1,5 +1,7 @@
-import { ServiceRegistry } from '../../content/strategies/ServiceRegistry.js';
+import { ServiceRegistry } from "../../content/strategies/ServiceRegistry.js";
+import { createLogger } from "../utils/logger.js";
 
+const logger = createLogger("[HTJ TabService]");
 export class TabService {
   private static serviceRegistry = new ServiceRegistry();
 
@@ -11,7 +13,7 @@ export class TabService {
       });
       return tab || null;
     } catch (error) {
-      console.error('Error getting current tab:', error);
+      logger.error("Error getting current tab:", error);
       return null;
     }
   }
@@ -20,7 +22,7 @@ export class TabService {
     try {
       await chrome.tabs.create({ url });
     } catch (error) {
-      console.error('Error opening URL:', error);
+      logger.error("Error opening URL:", error);
     }
   }
 

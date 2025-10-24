@@ -4,6 +4,7 @@ import { TabService } from "../shared/services/tabService.js";
 import { Header } from "./components/Header.ts";
 import { ServicesGrid } from "./components/ServicesGrid.js";
 import type { GetTabStateMessage } from "../types/messaging.js";
+import { popupLogger } from "../shared/utils/logger.js";
 
 class PopupApp {
   private state: PopupState;
@@ -67,10 +68,7 @@ class PopupApp {
         this.state.currentPage = "on-site";
       }
     } catch (error) {
-      console.error(
-        "[HTJ Popup] Could not get state from background script:",
-        error
-      );
+      popupLogger.error("Could not get state from background script:", error);
       this.state.currentPage = "on-site";
       const mainElement = document.getElementById("main-content")!;
       mainElement.innerHTML = `<p class="text-red-400 text-center">Error: Could not connect to extension background. Try reloading the page.</p>`;
@@ -278,7 +276,7 @@ class PopupApp {
 
   //     if (target.id === "login-btn") {
   //       // TODO: Implement login flow
-  //       console.log("Login clicked");
+  //       popupLogger.log("Login clicked");
   //     }
   //   });
   // }
