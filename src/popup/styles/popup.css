@@ -39,8 +39,17 @@
     @apply hover:translate-x-neo hover:translate-y-neo hover:shadow-none;
   }
 
+  .service-card--disabled {
+    @apply neo-card relative flex items-center justify-center cursor-not-allowed overflow-hidden shadow-none;
+  }
+
+  .service-card--disabled .service-logo {
+    @apply opacity-30;
+  }
+
   .service-logo {
-    @apply w-12 h-12 object-contain mb-2;
+    @apply w-full h-12 object-contain;
+    filter: brightness(0) invert(1);
   }
 }
 

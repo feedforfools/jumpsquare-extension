@@ -13,14 +13,14 @@ export class ServicesGrid {
     const premiumServices = services.filter((s) => s.isPremium);
 
     this.container.innerHTML = `
-      <div class="space-y-6">
+      <div class="space-y-2">
         <div class="text-center">
           <p class="text-sm text-brand-muted mb-6">To use the extension, please select one of the following services below.</p>
         </div>
         
         <div>
           <h3 class="text-sm font-semibold text-brand-muted mb-3">Supported Services</h3>
-          <div class="grid grid-cols-3 gap-3">
+          <div class="grid grid-cols-2 gap-4">
             ${freeServices
               .map((service) => this.renderServiceCard(service))
               .join("")}
@@ -35,7 +35,7 @@ export class ServicesGrid {
               <span class="text-sm font-semibold text-accent">⭐</span>
               <h3 class="text-sm font-semibold text-accent">Premium Services</h3>
             </div>
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-2 gap-4">
               ${premiumServices
                 .map((service) => this.renderServiceCard(service))
                 .join("")}
@@ -44,6 +44,10 @@ export class ServicesGrid {
         `
             : ""
         }
+
+        <div class="text-center pt-2">
+          <p class="text-xs text-brand-muted">...and many more coming soon!</p>
+        </div>
       </div>
     `;
 
@@ -52,11 +56,9 @@ export class ServicesGrid {
 
   private renderServiceCard(service: StreamingService): string {
     const isActive = service.isSupported;
-    const cardClasses = isActive
-      ? "service-card relative cursor-pointer"
-      : "service-card relative cursor-not-allowed opacity-50 grayscale";
+    const cardClasses = isActive ? "service-card" : "service-card--disabled";
 
-    const imageClasses = isActive ? "service-logo" : "service-logo grayscale";
+    const imageClasses = "service-logo";
 
     return `
       <div class="${cardClasses}" data-service-id="${service.id}" data-url="${service.url}" data-supported="${isActive}">
