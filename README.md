@@ -1,6 +1,6 @@
 # Jumpsquare - Browser Extension
 
-This repository contains the source code for the official "Here's the Jump!" browser extension. It works in tandem with the main [Jumpsquare](https://github.com/feedforfools/jumpsquare) project, bringing real-time jumpscare alerts directly to your favorite streaming services.
+This repository contains the source code for the official Jumpsquare browser extension. It works in tandem with the main [Jumpsquare](https://github.com/feedforfools/jumpsquare) project, bringing real-time jumpscare alerts directly to your favorite streaming services.
 
 Never be caught off guard by a sudden scare again. The extension automatically detects the movie you're watching, fetches jumpscare data from Jumpsquare database, and displays timely on-screen warnings before each event.
 
