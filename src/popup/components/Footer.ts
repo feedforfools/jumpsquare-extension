@@ -19,7 +19,7 @@ export class Footer {
       state.movie.id
     ) {
       url = `${this.baseUrl}/movie/${state.movie.id}`;
-      text = "View Full Details on HTJ.com";
+      text = "View full details on heresthejump.com";
     }
 
     this.container.innerHTML = `
