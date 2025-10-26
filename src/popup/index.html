@@ -6,10 +6,10 @@
     <title>Here's the Jump!</title>
     <link rel="stylesheet" href="./styles/popup.css">
 </head>
-<body class="bg-dark-bg text-white min-w-[320px] min-h-[400px]">
-    <div id="app" class="flex flex-col h-full">
+<body class="bg-dot-pattern text-brand-foreground w-[350px] min-h-[400px] flex flex-col">
+    <div id="app" class="flex flex-col flex-1">
         <!-- Header -->
-        <header id="header" class="bg-card-bg p-4 border-b border-gray-700">
+        <header id="header" class="p-4 bg-card-bg border-b-2 border-brand-border">
             <!-- Header content will be dynamically loaded -->
         </header>
         
@@ -17,6 +17,11 @@
         <main id="main-content" class="flex-1 p-4">
             <!-- Content will be dynamically loaded based on current page -->
         </main>
+        
+        <!-- Footer -->
+        <footer id="footer" class="p-4 bg-card-bg border-t-2 border-brand-border text-center">
+            <!-- Footer content will be dynamically loaded -->
+        </footer>
     </div>
     
     <script type="module" src="./index.ts"></script>

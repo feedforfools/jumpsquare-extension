@@ -3,21 +3,52 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    @apply h-full;
+  }
+
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* Define HSL variable for use in gradients */
+    --card-bg-hsl: 0, 15%, 17%;
   }
 }
 
 @layer components {
-  .service-card {
-    @apply bg-card-bg rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 hover:bg-gray-700 hover:scale-105;
+  /* Neobrutalist Card Style */
+  .neo-card {
+    @apply bg-card-bg rounded-base border-2 border-brand-border shadow-neo p-4;
   }
-  
+
+  /* Neobrutalist Button Style */
+  .neo-button {
+    @apply inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm font-medium transition-all;
+    @apply bg-accent text-white border-2 border-brand-border shadow-neo;
+    @apply hover:translate-x-neo hover:translate-y-neo hover:shadow-none;
+    @apply px-4 py-2;
+  }
+
+  /* Neobrutalist Badge Style */
+  .neo-badge {
+    @apply inline-flex items-center rounded-base border-2 border-brand-border px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  /* Component-specific styles */
+  .service-card {
+    @apply neo-card flex items-center justify-center cursor-pointer transition-all;
+    @apply hover:translate-x-neo hover:translate-y-neo hover:shadow-none;
+  }
+
   .service-logo {
     @apply w-12 h-12 object-contain mb-2;
   }
-  
-  .service-name {
-    @apply text-sm text-center text-gray-300;
+}
+
+@layer utilities {
+  /* Dot Pattern Background Utility */
+  .bg-dot-pattern {
+    background-color: theme('colors.dark-bg');
+    background-image: radial-gradient(hsl(var(--card-bg-hsl)) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
 }

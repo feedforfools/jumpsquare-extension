@@ -15,11 +15,11 @@ export class ServicesGrid {
     this.container.innerHTML = `
       <div class="space-y-6">
         <div class="text-center">
-          <p class="text-gray-300 mb-6">To use the extension, please select one of the following services below.</p>
+          <p class="text-sm text-brand-muted mb-6">To use the extension, please select one of the following services below.</p>
         </div>
         
         <div>
-          <h3 class="text-sm font-semibold text-gray-400 mb-3">Free services</h3>
+          <h3 class="text-sm font-semibold text-brand-muted mb-3">Supported Services</h3>
           <div class="grid grid-cols-3 gap-3">
             ${freeServices
               .map((service) => this.renderServiceCard(service))
