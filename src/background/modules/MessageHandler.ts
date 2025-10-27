@@ -22,7 +22,9 @@ export class MessageHandler {
         this.backgroundService.handleMovieDetected(
           tabId,
           message.payload.title,
-          message.payload.year
+          message.payload.year,
+          message.payload.runtime,
+          message.payload.rating
         );
         break;
 

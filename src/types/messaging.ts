@@ -6,6 +6,8 @@ export interface MovieDetectedMessage {
   payload: {
     title: string;
     year: string | null;
+    runtime?: string | null;
+    rating?: string | null;
   };
 }
 

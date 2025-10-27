@@ -14,8 +14,14 @@ export class MovieHandler {
   async handleMovieDetected(
     tabId: number,
     title: string,
-    year: string
+    year: string,
+    runtime?: string | null,
+    rating?: string | null
   ): Promise<void> {
+    backgroundLogger.log(
+      `Received movie detection - Title: ${title}, Year: ${year}, Runtime: ${runtime}, Rating: ${rating}`
+    );
+
     const state = await this.tabStateManager.getTabState(tabId);
 
     // Only fetch if the movie title or year has changed
@@ -32,20 +38,26 @@ export class MovieHandler {
     if (found && foundMovie) {
       state.movie = {
         id: foundMovie.id,
-        title: foundMovie.title,
-        year: foundMovie.year,
+        title: title || foundMovie.title,
+        year: year || foundMovie.year,
         jumpscares: jumpscares,
         jumpscareCount: jumpscares.length,
         isInDb: true,
+        runtime: runtime || undefined,
+        rating: rating || undefined,
+        genres: foundMovie.genres,
+        directors: foundMovie.directors,
       };
     } else {
-      // Movie not found in DB, store the detected info
+      // Movie not found in DB => store the detected info from content script
       state.movie = {
         title: title,
         year: year,
         jumpscares: [],
         jumpscareCount: 0,
         isInDb: false,
+        runtime: runtime || undefined,
+        rating: rating || undefined,
       };
     }
 

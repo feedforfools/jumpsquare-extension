@@ -14,9 +14,17 @@ export class BackgroundService {
   async handleMovieDetected(
     tabId: number,
     title: string,
-    year: string
+    year: string,
+    runtime?: string | null,
+    rating?: string | null
   ): Promise<void> {
-    await this.movieHandler.handleMovieDetected(tabId, title, year);
+    await this.movieHandler.handleMovieDetected(
+      tabId,
+      title,
+      year,
+      runtime,
+      rating
+    );
   }
 
   async clearTabState(tabId: number): Promise<void> {
