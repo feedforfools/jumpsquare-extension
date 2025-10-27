@@ -1,7 +1,5 @@
-import type {
-  StreamingServiceStrategy,
-  MovieInfo,
-} from "./StreamingServiceStrategy.js";
+import type { StreamingServiceStrategy } from "./StreamingServiceStrategy.js";
+import type { StrategyMovieInfo } from "../../types/index.js";
 import { contentLogger } from "../../shared/utils/logger.js";
 
 export class NetflixStrategy implements StreamingServiceStrategy {
@@ -32,7 +30,8 @@ export class NetflixStrategy implements StreamingServiceStrategy {
 
   isOnMoviePage(url: string): boolean {
     return (
-      this.matches(url) && (url.includes("?jbv=") || url.includes("/title/"))
+      this.matches(url) &&
+      (url.includes("/title/") || url.match(/[?&]jbv=\d+/) !== null)
     );
   }
 
@@ -40,21 +39,27 @@ export class NetflixStrategy implements StreamingServiceStrategy {
     return this.matches(url) && url.includes("/watch/");
   }
 
-  async extractMovieInfo(movieId?: string): Promise<MovieInfo> {
+  async extractMovieInfo(movieId?: string): Promise<StrategyMovieInfo> {
     if (!movieId) {
       movieId = this.getMovieIdFromUrl(window.location.href) || undefined;
     }
 
     if (!movieId) {
-      contentLogger.warn("No movie ID available for extraction");
-      return { title: null, year: null };
+      contentLogger.warn("Cannot extract movie info: missing movie ID in URL");
+      return {
+        title: null,
+        year: null,
+        runtime: null,
+        rating: null,
+        genres: null,
+        directors: null,
+      };
     }
 
     return await this.extractFromNetworkRequest(movieId);
   }
 
   getVideoElement(): HTMLVideoElement | null {
-    // TODO: verify if this works in Netflix
     return document.querySelector("video");
   }
 
@@ -63,41 +68,150 @@ export class NetflixStrategy implements StreamingServiceStrategy {
     return !this.isInVideoPlayer(window.location.href);
   }
 
-  /**
-   * Extract metadata by fetching the Netflix API directly
-   */
-  private async extractFromNetworkRequest(movieId: string): Promise<MovieInfo> {
-    contentLogger.log("Fetching metadata from Netflix API for movie", movieId);
+  // Extract metadata by fetching the Netflix GraphQL API
+  private async extractFromNetworkRequest(
+    movieId: string
+  ): Promise<StrategyMovieInfo> {
+    contentLogger.log(
+      "Fetching metadata from Netflix GraphQL API for movie",
+      movieId
+    );
 
     try {
-      const apiUrl = `https://www.netflix.com/nq/website/memberapi/release/metadata?movieid=${movieId}`;
-      const response = await fetch(apiUrl, {
-        credentials: "include", // Include cookies for authentication
+      const graphqlUrl = "https://web.prod.cloud.netflix.com/graphql";
+
+      // Netflix uses persisted queries => we need to use the correct query ID and variables
+      const graphqlQuery = {
+        operationName: "DetailModal",
+        variables: {
+          opaqueImageFormat: "WEBP",
+          transparentImageFormat: "WEBP",
+          videoMerchEnabled: true,
+          fetchPromoVideoOverride: false,
+          hasPromoVideoOverride: false,
+          promoVideoId: 0,
+          videoMerchContext: "BROWSE",
+          isLiveEpisodic: false,
+          artworkContext: {},
+          textEvidenceUiContext: "ODP",
+          unifiedEntityId: `Video:${movieId}`,
+        },
+        extensions: {
+          persistedQuery: {
+            id: "e0f86eeb-c2cd-4b7c-955f-5da5455124be", // Netflix's persisted query ID for DetailModal
+            version: 102,
+          },
+        },
+      };
+
+      const response = await fetch(graphqlUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-netflix.context.operation-name": "DetailModal",
+          "x-netflix.request.client.context": JSON.stringify({
+            appstate: "foreground",
+          }),
+        },
+        credentials: "include",
+        body: JSON.stringify(graphqlQuery),
       });
 
       if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
+        throw new Error(
+          `GraphQL request failed with status ${response.status}`
+        );
       }
 
       const data = await response.json();
 
-      if (data?.video?.title && data?.video?.year) {
-        contentLogger.log(
-          "Successfully extracted metadata:",
-          data.video.title,
-          `(${data.video.year})`
-        );
+      // Check for GraphQL errors
+      if (data.errors) {
+        contentLogger.error("GraphQL errors:", data.errors);
         return {
-          title: data.video.title,
-          year: String(data.video.year),
+          title: null,
+          year: null,
+          runtime: null,
+          rating: null,
+          genres: null,
+          directors: null,
         };
       }
 
-      contentLogger.warn("API response missing expected video data:", data);
-      return { title: null, year: null };
+      const video = data?.data?.unifiedEntities?.[0];
+
+      if (video?.title) {
+        const year = video.latestYear ? String(video.latestYear) : null;
+
+        let runtime: string | null = null;
+        if (video.__typename === "Movie" && video.displayRuntimeSec) {
+          const runtimeInMinutes = Math.round(video.displayRuntimeSec / 60);
+          runtime = String(runtimeInMinutes); // Just the number, no "m"
+        }
+
+        const rating = video.contentAdvisory?.certificationValue || null;
+
+        let genres: string[] | null = null;
+        if (video.genreTags?.edges && video.genreTags.edges.length > 0) {
+          genres = video.genreTags.edges
+            .map((edge: any) => edge.node?.name)
+            .filter((name: string) => !!name);
+          if (genres?.length === 0) genres = null;
+        }
+
+        let directors: string[] | null = null;
+        if (video.__typename === "Movie" && video.directors?.edges) {
+          directors = video.directors.edges
+            .map((edge: any) => edge.node?.name)
+            .filter((name: string) => !!name);
+        } else if (video.__typename === "Show" && video.creators?.edges) {
+          directors = video.creators.edges
+            .map((edge: any) => edge.node?.name)
+            .filter((name: string) => !!name);
+        }
+
+        if (directors && directors.length === 0) {
+          directors = null;
+        }
+
+        contentLogger.log("Successfully extracted movie info: ", {
+          title: video.title,
+          year: year,
+          runtime: runtime,
+          rating: rating,
+          genres: genres,
+          directors: directors,
+        });
+
+        return {
+          title: video.title,
+          year: year,
+          runtime: runtime,
+          rating: rating,
+          genres: genres,
+          directors: directors,
+        };
+      }
+
+      contentLogger.warn("GraphQL response missing expected video data:", data);
+      return {
+        title: null,
+        year: null,
+        runtime: null,
+        rating: null,
+        genres: null,
+        directors: null,
+      };
     } catch (error) {
-      contentLogger.error("Network request extraction failed:", error);
-      return { title: null, year: null };
+      contentLogger.error("GraphQL request extraction failed:", error);
+      return {
+        title: null,
+        year: null,
+        runtime: null,
+        rating: null,
+        genres: null,
+        directors: null,
+      };
     }
   }
 }

@@ -1,7 +1,5 @@
-import type {
-  StreamingServiceStrategy,
-  MovieInfo,
-} from "./StreamingServiceStrategy.js";
+import type { StreamingServiceStrategy } from "./StreamingServiceStrategy.js";
+import type { StrategyMovieInfo } from "../../types/index.js";
 import { contentLogger } from "../../shared/utils/logger.js";
 
 export class PrimeVideoStrategy implements StreamingServiceStrategy {
@@ -70,21 +68,160 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
     return true;
   }
 
-  async extractMovieInfo(movieId?: string): Promise<MovieInfo> {
-    // If movieId is provided, wait for it to appear in DOM first
-    if (movieId) {
-      const isReady = await this.waitForMovieIdInDOM(movieId);
-      if (!isReady) {
-        contentLogger.warn(
-          `Proceeding with extraction despite movie ID not found in DOM`
+  async extractMovieInfo(): Promise<StrategyMovieInfo> {
+    // Fetch and parse the page content via network request
+    const fromNetwork = await this.fetchAndParsePage();
+    if (fromNetwork.title && fromNetwork.year) {
+      contentLogger.log(
+        "Extracted movie info from fetched page content",
+        fromNetwork
+      );
+    } else {
+      contentLogger.warn(
+        "Failed to extract movie info from fetched page content."
+      );
+    }
+    return fromNetwork;
+  }
+
+  private async fetchAndParsePage(): Promise<StrategyMovieInfo> {
+    try {
+      const response = await fetch(window.location.href, {
+        method: "GET",
+        headers: {
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        },
+        credentials: "omit", // Cookies are handled by the browser automatically
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Network request failed with status ${response.status}`
         );
       }
+
+      const htmlText = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, "text/html");
+
+      return this.extractFromPageData(doc);
+    } catch (error) {
+      contentLogger.error("Error fetching or parsing page content:", error);
+      return {
+        title: null,
+        year: null,
+        runtime: null,
+        rating: null,
+        genres: null,
+        directors: null,
+      };
     }
+  }
 
-    const title = this.extractTitle();
-    const { year } = this.extractFromBadges();
+  private extractFromPageData(scope: Document = document): StrategyMovieInfo {
+    try {
+      const scriptElements = scope.querySelectorAll(
+        'div#a-page script[type="text/template"]'
+      );
 
-    return { title, year };
+      if (scriptElements.length === 0) {
+        contentLogger.warn("No script[type='text/template'] found in scope.");
+        return {
+          title: null,
+          year: null,
+          runtime: null,
+          rating: null,
+          genres: null,
+          directors: null,
+        };
+      }
+
+      for (const scriptElement of scriptElements) {
+        if (!scriptElement?.textContent) {
+          continue;
+        }
+
+        const data = JSON.parse(scriptElement.textContent);
+        const pageData = data?.props?.body?.[0]?.props;
+
+        if (!pageData) {
+          continue;
+        }
+
+        const pageTitleId = pageData.atf?.state?.pageTitleId;
+        const movieData =
+          pageData.atf?.state?.detail?.headerDetail?.[pageTitleId];
+
+        // If we found the movie data in this script, extract and return it
+        if (movieData?.title && movieData.releaseYear) {
+          const title = this.decodeHtmlEntities(movieData.title);
+          const year = movieData.releaseYear
+            ? String(movieData.releaseYear)
+            : null;
+
+          // Convert Prime Video runtime format to minutes only
+          let runtime: string | null = null;
+          if (movieData.runtime) {
+            runtime = this.convertRuntimeToMinutes(movieData.runtime);
+          }
+
+          const rating = movieData.ratingBadge?.displayText || null;
+          const genres =
+            movieData.genres
+              ?.map((g: { text: string }) => g.text)
+              .filter(Boolean) || null;
+          const directors =
+            movieData.contributors?.directors
+              ?.map((d: { name: string }) => d.name)
+              .filter(Boolean) || null;
+
+          return { title, year, runtime, rating, genres, directors };
+        }
+      }
+
+      // If the loop completes, no script contained the movie data
+      return {
+        title: null,
+        year: null,
+        runtime: null,
+        rating: null,
+        genres: null,
+        directors: null,
+      };
+    } catch (error) {
+      contentLogger.error("Error parsing page data JSON:", error);
+      return {
+        title: null,
+        year: null,
+        runtime: null,
+        rating: null,
+        genres: null,
+        directors: null,
+      };
+    }
+  }
+
+  private convertRuntimeToMinutes(runtime: string): string | null {
+    if (!runtime) return null;
+
+    // Match patterns like "1 h 45 min", "2 h 30 min", "90 min"
+    const hoursMatch = runtime.match(/(\d+)\s*h/);
+    const minutesMatch = runtime.match(/(\d+)\s*min/);
+
+    const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
+    const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+
+    const totalMinutes = hours * 60 + minutes;
+
+    return totalMinutes > 0 ? String(totalMinutes) : null;
+  }
+
+  private decodeHtmlEntities(text: string): string | null {
+    if (!text) return null;
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = text;
+    return textarea.value;
   }
 
   getVideoElement(): HTMLVideoElement | null {
@@ -107,155 +244,5 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
     );
 
     return activePlayerContainer === null;
-  }
-
-  private async waitForMovieIdInDOM(
-    movieId: string,
-    maxAttempts: number = 150, // 150 attempts * 200ms = 30 seconds max
-    intervalMs: number = 200
-  ): Promise<boolean> {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      // A set of selectors where the new movie ID should appear once the page is ready
-      const selectors = [
-        `a[data-automation-id="dp-atf-play-button"][href*="${movieId}"]`, // Play button
-        `input[name="titleID"][value="${movieId}"]`, // Watchlist hidden input
-        `a[aria-label="Go ad free"][href*="${movieId}"]`, // "Go ad free" button
-      ];
-
-      const foundElements = selectors.map((selector) => {
-        const element = document.querySelector(selector);
-        return !!element;
-      });
-
-      const foundCount = foundElements.filter((found) => found).length;
-
-      // Require all 3 elements to be present
-      if (foundCount === selectors.length) {
-        return true;
-      }
-
-      if (attempt < maxAttempts - 1) {
-        await new Promise((resolve) => setTimeout(resolve, intervalMs));
-      }
-    }
-
-    contentLogger.warn(
-      `Movie ID ${movieId} not found in DOM after ${maxAttempts} attempts (${
-        maxAttempts * intervalMs
-      }ms). Extraction might fail.`
-    );
-    return false;
-  }
-
-  private extractTitle(): string | null {
-    const textTitle = this.extractTitleFromText();
-    const imageTitle = this.extractTitleFromImage();
-
-    if (textTitle && imageTitle) {
-      // If both are found they must match
-      return textTitle === imageTitle ? this.cleanTitle(textTitle) : null;
-    }
-
-    // If only one is found return it
-    const finalTitle = textTitle || imageTitle;
-    return finalTitle ? this.cleanTitle(finalTitle) : null;
-  }
-
-  private extractTitleFromText(): string | null {
-    const titleSelectors = [
-      'h1[data-automation-id="title"]', // This is the only valid apparently
-      ".atvwebplayersdk-title-text",
-      '[data-testid="hero-title"]',
-      ".av-detail-section h1",
-      ".dv-detail-section h1",
-      ".av-dp-container .av-badges",
-      ".title-wrapper h1",
-    ];
-
-    for (const selector of titleSelectors) {
-      const titleElement = document.querySelector(selector);
-      if (titleElement?.textContent?.trim()) {
-        const titleText = titleElement.textContent.trim();
-        // Skip if "trailer" appears anywhere in the title (case-insensitive)
-        if (/trailer/i.test(titleText)) {
-          continue;
-        }
-        return titleText;
-      }
-    }
-    return null;
-  }
-
-  private extractTitleFromImage(): string | null {
-    // Titles might also be in image alt attributes when the logo of the movie is used
-    const imageTitleElement = document.querySelector(
-      'h1[data-testid="title-art"] img[data-testid="base-image"]'
-    );
-    if (
-      imageTitleElement instanceof HTMLImageElement &&
-      imageTitleElement.alt
-    ) {
-      return imageTitleElement.alt;
-    }
-    return null;
-  }
-
-  private cleanTitle(rawTitle: string): string {
-    // Remove parenthetical year information like "Movie Title (1999)"
-    const titleWithoutYear = rawTitle.replace(
-      /\s*\(\s*(?:19|20)\d{2}(?:[^)]*)\)\s*$/g,
-      ""
-    );
-    return titleWithoutYear.trim();
-  }
-
-  private extractFromBadges(): {
-    year: string | null;
-    duration: string | null;
-  } {
-    // Look for the badges container
-    const badgesSelectors = [
-      ".dv-node-dp-badges",
-      ".av-detail-section .av-badges",
-      ".dv-detail-section .av-badges",
-      ".av-dp-container .av-badges",
-    ];
-
-    let badgesContainer: Element | null = null;
-    for (const selector of badgesSelectors) {
-      badgesContainer = document.querySelector(selector);
-      if (badgesContainer) break;
-    }
-
-    if (!badgesContainer) {
-      return { year: null, duration: null };
-    }
-
-    // Extract year from release year badge
-    let year: string | null = null;
-    const yearBadge = badgesContainer.querySelector(
-      '[data-automation-id="release-year-badge"]'
-    );
-    if (yearBadge?.textContent) {
-      const yearMatch = yearBadge.textContent.match(/\b(19\d\d|20\d\d)\b/);
-      if (yearMatch) {
-        year = yearMatch[0];
-      }
-    }
-
-    // Extract duration from runtime badge
-    let duration: string | null = null;
-    const runtimeBadge = badgesContainer.querySelector(
-      '[data-automation-id="runtime-badge"]'
-    );
-    if (runtimeBadge?.textContent) {
-      // Runtime can be in formats like "2h", "1h 30min", "90min"
-      const runtimeText = runtimeBadge.textContent.trim();
-      if (runtimeText) {
-        duration = runtimeText;
-      }
-    }
-
-    return { year, duration };
   }
 }

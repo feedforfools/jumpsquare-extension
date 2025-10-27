@@ -1,7 +1,4 @@
-export interface MovieInfo {
-  title: string | null;
-  year: string | null;
-}
+import type { StrategyMovieInfo } from "../../types/index.ts";
 
 export interface StreamingServiceStrategy {
   /**
@@ -27,7 +24,9 @@ export interface StreamingServiceStrategy {
   /**
    * Extracts movie information from the DOM
    */
-  extractMovieInfo(movieId?: string): MovieInfo | Promise<MovieInfo>;
+  extractMovieInfo(
+    movieId?: string
+  ): StrategyMovieInfo | Promise<StrategyMovieInfo>;
 
   /**
    * Extracts the movie ID from the URL
