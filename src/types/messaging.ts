@@ -1,14 +1,9 @@
-import type { Jumpscare } from "./index.js";
+import type { Jumpscare, StrategyMovieInfo } from "./index.js";
 
 // Content Script -> Background Script
 export interface MovieDetectedMessage {
   type: "MOVIE_DETECTED";
-  payload: {
-    title: string;
-    year: string | null;
-    runtime?: string | null;
-    rating?: string | null;
-  };
+  payload: StrategyMovieInfo;
 }
 
 export interface ClearTabStateMessage {

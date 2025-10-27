@@ -1,4 +1,4 @@
-import type { TabState } from "../../types/index.js";
+import type { StrategyMovieInfo, TabState } from "../../types/index.js";
 import { backgroundLogger } from "../../shared/utils/logger.js";
 import { MovieHandler } from "./MovieHandler.js";
 import { TabStateManager } from "./TabStateManager.js";
@@ -13,18 +13,9 @@ export class BackgroundService {
 
   async handleMovieDetected(
     tabId: number,
-    title: string,
-    year: string,
-    runtime?: string | null,
-    rating?: string | null
+    movie: StrategyMovieInfo
   ): Promise<void> {
-    await this.movieHandler.handleMovieDetected(
-      tabId,
-      title,
-      year,
-      runtime,
-      rating
-    );
+    await this.movieHandler.handleMovieDetected(tabId, movie);
   }
 
   async clearTabState(tabId: number): Promise<void> {

@@ -74,6 +74,20 @@ export class TabStateManager {
                     typeof savedState.movie.isInDb === "boolean"
                       ? savedState.movie.isInDb
                       : false,
+                  runtime:
+                    typeof savedState.movie.runtime === "string"
+                      ? savedState.movie.runtime
+                      : undefined,
+                  rating:
+                    typeof savedState.movie.rating === "string"
+                      ? savedState.movie.rating
+                      : undefined,
+                  genres: Array.isArray(savedState.movie.genres)
+                    ? savedState.movie.genres
+                    : undefined,
+                  directors: Array.isArray(savedState.movie.directors)
+                    ? savedState.movie.directors
+                    : undefined,
                 }
               : null,
         };

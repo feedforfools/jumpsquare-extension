@@ -2,6 +2,7 @@ import type { JumpscareDataMessage } from "../../types/messaging.js";
 import { backgroundLogger } from "../../shared/utils/logger.js";
 import type { TabStateManager } from "./TabStateManager.js";
 import { JumpscareApiService } from "./JumpscareApiService.js";
+import type { StrategyMovieInfo } from "../../types/index.js";
 
 export class MovieHandler {
   private tabStateManager: TabStateManager;
@@ -13,19 +14,19 @@ export class MovieHandler {
 
   async handleMovieDetected(
     tabId: number,
-    title: string,
-    year: string,
-    runtime?: string | null,
-    rating?: string | null
+    detectedMovie: StrategyMovieInfo
   ): Promise<void> {
     backgroundLogger.log(
-      `Received movie detection - Title: ${title}, Year: ${year}, Runtime: ${runtime}, Rating: ${rating}`
+      `Received movie detection - Title: ${detectedMovie.title}, Year: ${detectedMovie.year}, Runtime: ${detectedMovie.runtime}, Rating: ${detectedMovie.rating}, Genres: ${detectedMovie.genres}, Directors: ${detectedMovie.directors}`
     );
 
     const state = await this.tabStateManager.getTabState(tabId);
 
     // Only fetch if the movie title or year has changed
-    if (state.movie?.title === title && state.movie?.year === year) {
+    if (
+      state.movie?.title === detectedMovie.title &&
+      state.movie?.year === detectedMovie.year
+    ) {
       return;
     }
 
@@ -33,31 +34,36 @@ export class MovieHandler {
       movie: foundMovie,
       jumpscares,
       found,
-    } = await this.jumpscareApiService.fetchJumpscares(title, year);
+    } = await this.jumpscareApiService.fetchJumpscares(
+      detectedMovie.title!,
+      detectedMovie.year
+    );
 
     if (found && foundMovie) {
       state.movie = {
         id: foundMovie.id,
-        title: title || foundMovie.title,
-        year: year || foundMovie.year,
+        title: detectedMovie.title || foundMovie.title,
+        year: detectedMovie.year || foundMovie.year,
         jumpscares: jumpscares,
         jumpscareCount: jumpscares.length,
         isInDb: true,
-        runtime: runtime || undefined,
-        rating: rating || undefined,
-        genres: foundMovie.genres,
-        directors: foundMovie.directors,
+        runtime: detectedMovie.runtime || undefined,
+        rating: detectedMovie.rating || undefined,
+        genres: detectedMovie.genres || foundMovie.genres || undefined,
+        directors: detectedMovie.directors || foundMovie.directors || undefined,
       };
     } else {
       // Movie not found in DB => store the detected info from content script
       state.movie = {
-        title: title,
-        year: year,
+        title: detectedMovie.title!,
+        year: detectedMovie.year!,
         jumpscares: [],
         jumpscareCount: 0,
         isInDb: false,
-        runtime: runtime || undefined,
-        rating: rating || undefined,
+        runtime: detectedMovie.runtime || undefined,
+        rating: detectedMovie.rating || undefined,
+        genres: detectedMovie.genres || undefined,
+        directors: detectedMovie.directors || undefined,
       };
     }
 

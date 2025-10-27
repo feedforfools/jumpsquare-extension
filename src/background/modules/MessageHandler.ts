@@ -19,13 +19,7 @@ export class MessageHandler {
       case "MOVIE_DETECTED":
         if (!tabId) break;
 
-        this.backgroundService.handleMovieDetected(
-          tabId,
-          message.payload.title,
-          message.payload.year,
-          message.payload.runtime,
-          message.payload.rating
-        );
+        this.backgroundService.handleMovieDetected(tabId, message.payload);
         break;
 
       case "CLEAR_TAB_STATE":

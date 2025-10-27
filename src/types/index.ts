@@ -27,6 +27,15 @@ export interface Movie {
   directors?: string[];
 }
 
+export interface StrategyMovieInfo {
+  title: string | null;
+  year: string | null;
+  runtime: string | null;
+  rating: string | null;
+  genres: string[] | null;
+  directors?: string[] | null;
+}
+
 export interface PopupState {
   currentPage:
     | "services"
