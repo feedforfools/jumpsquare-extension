@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Here's the Jump!",
   "description": "Real-time jumpscare alerts on your favorite streaming platforms.",
-  "version": "0.1.0",
-  "permissions": ["storage", "tabs", "scripting"],
+  "version": "1.0.0",
+  "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://*.primevideo.com/*",
     "https://*.netflix.com/*"
@@ -36,5 +36,14 @@
       "resources": [],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "homepage_url": "https://www.heresthejump.com",
+  "externally_connectable": {
+    "matches": [
+      "https://www.heresthejump.com/*"
+    ]
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }

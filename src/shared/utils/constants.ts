@@ -1,6 +1,12 @@
 import type { StreamingService } from "../../types/index.js";
 
+declare const __DEV__: boolean;
+
 export const WARNING_WINDOW_SECONDS = 8;
+
+export const API_BASE_URL = __DEV__
+  ? "http://localhost:3000"
+  : "https://www.heresthejump.com";
 
 export const STREAMING_SERVICES: StreamingService[] = [
   {

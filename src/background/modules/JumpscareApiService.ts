@@ -1,6 +1,7 @@
 import type { Jumpscare, Movie } from "../../types/index.js";
 import { backgroundLogger } from "../../shared/utils/logger.js";
 import { InstanceService } from "./InstanceService.js";
+import { API_BASE_URL } from "../../shared/utils/constants.js";
 
 export interface JumpscareApiResponse {
   movie: Movie | null;
@@ -9,8 +10,6 @@ export interface JumpscareApiResponse {
 }
 
 export class JumpscareApiService {
-  private readonly apiBaseUrl = "http://localhost:3000"; // TODO: Use production URL
-
   async fetchJumpscares(
     title: string,
     year: string | null
@@ -28,7 +27,7 @@ export class JumpscareApiService {
       }
 
       const response = await fetch(
-        `${this.apiBaseUrl}/api/extension/jumpscares?${params.toString()}`,
+        `${API_BASE_URL}/api/extension/jumpscares?${params.toString()}`,
         { headers }
       );
 
