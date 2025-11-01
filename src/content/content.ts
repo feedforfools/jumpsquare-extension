@@ -30,7 +30,18 @@ class ContentScript {
   }
 
   private setupVideoTracking(): void {
-    this.videoTracker.setTimeUpdateCallback((currentTime: number) => {
+    this.videoTracker.setTimeUpdateCallback((rawTime: number) => {
+      const strategy = this.serviceRegistry.getCurrentStrategy();
+      let currentTime = rawTime;
+
+      // Validate rawTime with strategy-specific time correction if available (e.g. for ads)
+      if (strategy && typeof strategy.getDisplayedVideoTime === "function") {
+        const displayedTime = strategy.getDisplayedVideoTime();
+        if (displayedTime !== null) {
+          currentTime = displayedTime;
+        }
+      }
+
       this.notificationOrchestrator.checkJumpscares(currentTime);
     });
   }

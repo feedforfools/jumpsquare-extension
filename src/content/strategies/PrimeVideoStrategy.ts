@@ -245,4 +245,41 @@ export class PrimeVideoStrategy implements StreamingServiceStrategy {
 
     return activePlayerContainer === null;
   }
+
+  getDisplayedVideoTime(): number | null {
+    const activePlayerContainer = document.querySelector(
+      "[id^='dv-web-player'].dv-player-fullscreen"
+    );
+
+    if (!activePlayerContainer) return null;
+
+    // Get Prime Video's time display element
+    const timeDisplay = activePlayerContainer.querySelector(
+      ".atvwebplayersdk-timeindicator-text"
+    );
+
+    if (!timeDisplay?.textContent) return null;
+
+    // Parse the displayed time (e.g., "0:38:54 / 1:13:43")
+    // Split by " / " and take the first part (current time)
+    const displayedTime = timeDisplay.textContent.split(" / ")[0];
+
+    return this.parseTimeToSeconds(displayedTime);
+  }
+
+  private parseTimeToSeconds(timeStr: string): number | null {
+    if (!timeStr || timeStr === "N/A") return null;
+
+    const parts = timeStr.split(":").map((p) => parseInt(p, 10));
+
+    if (parts.length === 2) {
+      // MM:SS format
+      return parts[0] * 60 + parts[1];
+    } else if (parts.length === 3) {
+      // H:MM:SS format
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+
+    return null;
+  }
 }

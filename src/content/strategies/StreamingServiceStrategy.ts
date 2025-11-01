@@ -42,4 +42,9 @@ export interface StreamingServiceStrategy {
    * Gets the service name
    */
   getServiceName(): string;
+
+  /**
+   * Gets the displayed video time from the player UI
+   */
+  getDisplayedVideoTime?(): number | null;
 }
