@@ -127,13 +127,19 @@ class ContentScript {
   private clearTabState(): void {
     this.notificationOrchestrator.setJumpscares([]);
 
-    chrome.runtime
-      .sendMessage({
-        type: "CLEAR_TAB_STATE",
-      })
-      .catch((error) => {
-        contentLogger.error("Failed to send clear state message:", error);
-      });
+    // Check if the runtime is still valid before sending messages
+    if (chrome.runtime?.id) {
+      chrome.runtime
+        .sendMessage({
+          type: "CLEAR_TAB_STATE",
+        })
+        .catch((error) => {
+          // Only log if it's not an "Extension context invalidated" error
+          if (!error.message?.includes("Extension context invalidated")) {
+            contentLogger.error("Failed to send clear state message:", error);
+          }
+        });
+    }
   }
 
   private setupDOMObserver(): void {
